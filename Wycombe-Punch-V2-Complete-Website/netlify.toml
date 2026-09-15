@@ -1,9 +1,0 @@
-# Complete-project Git deployment: publish only the public site directory.
-[build]
-  publish = "site"
-
-[build.processing]
-  skip_processing = false
-
-[build.processing.html]
-  pretty_urls = false
