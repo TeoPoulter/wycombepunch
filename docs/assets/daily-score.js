@@ -18,7 +18,7 @@
     if (endpoint.username || endpoint.password) return;
   } catch (_) { return; }
 
-  const version = '2';
+  const version = '3';
   const currentMode = () => window.WP?.reducedMotion ? 'motion-free' : 'precision';
   let revision = 0;
   let resetTimer;
@@ -33,9 +33,7 @@
 
   function validRun(run) {
     return run?.version === version && ['precision', 'motion-free'].includes(run.mode) &&
-      Array.isArray(run.hitScores) && run.hitScores.length === 3 &&
-      run.hitScores.every(score => Number.isInteger(score) && score >= 0 && score <= 333) &&
-      Number.isInteger(run.score) && run.score === run.hitScores.reduce((sum, score) => sum + score, 0);
+      Number.isInteger(run.score) && run.score >= 0 && run.score <= 999;
   }
 
   async function refresh(run) {
@@ -58,7 +56,7 @@
         signal: controller.signal,
         ...(run ? {
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ version, mode, score: run.score, hitScores: run.hitScores })
+          body: JSON.stringify({ version, mode, score: run.score })
         } : {})
       });
       if (!response.ok) throw new Error('Daily score unavailable');

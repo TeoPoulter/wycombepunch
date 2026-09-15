@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const code = readFileSync(new URL('../../docs/assets/daily-score.js', import.meta.url), 'utf8');
 const settled = () => new Promise(resolve => setImmediate(resolve));
 function record(highScore, mode = 'precision') {
-  return { version: '2', mode, highScore, day: '2026-09-15', timeZone: 'Europe/London', resetAt: new Date(Date.now() + 3600000).toISOString() };
+  return { version: '3', mode, highScore, day: '2026-09-15', timeZone: 'Europe/London', resetAt: new Date(Date.now() + 3600000).toISOString() };
 }
 function setup(fetch, endpoint = 'https://score.example/daily-score') {
   const value = { textContent: '' };
@@ -59,14 +59,36 @@ test('only complete valid runs submit anonymous scoring fields', async () => {
   const calls = [];
   const state = setup(async (url, options) => { calls.push({ url, options }); return Response.json(record(777)); });
   await settled();
-  state.document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: { score: 999, hitScores: [1], version: '2', mode: 'precision' } }));
+  for (const detail of [
+    { score: 999, hitScores: [333, 333, 333], version: '2', mode: 'precision' },
+    { score: -1, version: '3', mode: 'precision' },
+    { score: 1000, version: '3', mode: 'precision' },
+    { score: 998.5, version: '3', mode: 'precision' },
+    { score: '999', version: '3', mode: 'precision' },
+    { score: 999, version: '3', mode: 'unknown' }
+  ]) state.document.dispatchEvent(new CustomEvent('wp:game-complete', { detail }));
   assert.equal(calls.length, 1);
-  state.document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: { score: 777, hitScores: [333, 222, 222], version: '2', mode: 'precision', runId: 'local-only', bestCombo: 3 } }));
+  state.document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: { score: 777, version: '3', mode: 'precision', runId: 'local-only' } }));
   await settled();
   assert.equal(calls.length, 2);
-  assert.deepEqual(JSON.parse(calls[1].options.body), { version: '2', mode: 'precision', score: 777, hitScores: [333, 222, 222] });
+  assert.deepEqual(JSON.parse(calls[1].options.body), { version: '3', mode: 'precision', score: 777 });
+  assert.equal(calls[1].url.searchParams.get('version'), '3');
   assert.equal(calls[1].options.credentials, 'omit');
   assert.equal(state.value.textContent, '777');
+});
+
+test('submitted zero and 999 work without per-hit fields', async () => {
+  for (const score of [0, 999]) {
+    const state = setup(async () => Response.json(record(score)));
+    await settled();
+    state.document.dispatchEvent(new CustomEvent('wp:game-complete', {
+      detail: { runId: `run-${score}`, score, version: '3', mode: 'precision' }
+    }));
+    await settled();
+    assert.equal(state.value.textContent, String(score).padStart(3, '0'));
+    assert.equal(state.panel.dataset.state, 'ready');
+    assert.match(state.status.textContent, /Your score is in/);
+  }
 });
 
 test('late response from another mode never overwrites the selected mode', async () => {

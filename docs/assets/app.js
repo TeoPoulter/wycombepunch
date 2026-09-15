@@ -189,7 +189,7 @@
       countTo($('#hero-score'), score, svg, 720);
       $('.score-caption').textContent = score >= 950 ? 'Now do it again.' : 'You can beat that.';
       $('#hero-demo-note').textContent = score >= 950 ? 'That’s more like it. Got another one in you?' : 'Try again. You’ve got a higher score in you.';
-      $('#hero-live').textContent = `${score}. Have another go, or play Punch Rush to test your timing.`;
+      $('#hero-live').textContent = `${score}. Have another go, or play Hit 999 to test your timing.`;
       setTimeout(() => { busy = false; hero.removeAttribute('aria-disabled'); }, reduced ? 200 : 1120);
     });
     hero.disabled = false;
@@ -250,7 +250,7 @@
         event: eventType.value || 'Not selected',
         date: date.value ? new Date(`${date.value}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be confirmed',
         venue: venue.value.trim() || 'To be confirmed',
-        duration: $('#duration').value || 'Not sure yet'
+        duration: $('#duration').value || 'Something else'
       };
       $$('[data-summary]').forEach(el => { el.textContent = values[el.dataset.summary] || ''; });
       $('#message-count').textContent = String(message.value.length);
@@ -293,7 +293,7 @@
     }
     function createDraft(data) {
       const value = (key, fallback='Not provided') => String(data.get(key) || '').trim() || fallback;
-      return ['WYCOMBE PUNCH — EVENT ENQUIRY','',`Name: ${value('name')}`,`Email: ${value('email')}`,`Phone: ${value('phone')}`,`Occasion: ${value('event-type')}`,`Date: ${value('event-date','Not confirmed yet')}`,`Hire duration: ${value('duration','Not sure yet')}`,`Venue / town / postcode: ${value('venue')}`,'','Extra details:',value('message','None'),'','This is an enquiry, not a confirmed booking.'].join('\n');
+      return ['WYCOMBE PUNCH — EVENT ENQUIRY','',`Name: ${value('name')}`,`Email: ${value('email')}`,`Phone: ${value('phone')}`,`Occasion: ${value('event-type')}`,`Date: ${value('event-date','Not confirmed yet')}`,`Hire duration: ${value('duration','Something else')}`,`Venue / town / postcode: ${value('venue')}`,'','Extra details:',value('message','None'),'','This is an enquiry, not a confirmed booking.'].join('\n');
     }
     form.addEventListener('submit', async event => {
       event.preventDefault();
@@ -306,7 +306,7 @@
       lastDraft = createDraft(data);
       $('#copy-fallback').hidden = true;
       if (!ready) {
-        showResult('Enquiry prepared — not sent', 'You can copy your event details below. No message has been sent and no date has been reserved.');
+        showResult('Enquiry prepared — not sent', 'Copy your event details below and send them to @wycombepunchmachine on Instagram. Nothing has been sent yet.');
         return;
       }
       if (formConfig.provider === 'email') {

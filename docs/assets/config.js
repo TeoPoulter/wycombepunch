@@ -14,7 +14,7 @@ window.WP_CONFIG = Object.freeze({
   },
   contact: {
     email: '',
-    instagramUsername: '' // Only your confirmed handle, without @. Blank = no fake link.
+    instagramUsername: 'wycombepunchmachine' // Only your confirmed handle, without @. Blank = no fake link.
   },
   form: {
     provider: 'netlify', // 'netlify', 'formspree' or 'email'.

@@ -1,231 +1,141 @@
-/* Three-hit timing arcade. Every hit contributes to one score out of 999.
- * Scores stay in page memory. A separate, explicitly configured leaderboard
- * adapter may listen for wp:game-complete; this file makes no network requests.
+/* Hit 999: one button, one timed hit, one score. No random scoring or storage.
+ * A configured daily-score adapter can listen for wp:game-complete.
  */
 (() => {
   'use strict';
   const WP = window.WP;
   if (!WP) return;
-  const { $, $$, toast, countTo, hitMachine, clearMachine } = WP;
+  const { $ } = WP;
   const arena = $('#game-arena');
   if (!arena) return;
-  const mainButton = $('#game-button');
+  const button = $('#game-button');
   const buttonLabel = $('#game-button-label');
   const scoreElement = $('#game-score');
   const feedback = $('#game-feedback');
   const marker = $('#meter-cursor');
-  const cabinet = $('[data-machine-svg]', $('[data-game-machine-stage]'));
-  const result = $('#game-result');
-  const hitNames = ['Jab', 'Cross', 'Hook'];
-  const halfCycles = [1100, 920, 760];
-  const maxHitMs = 8000;
-  const nextHitDelayMs = 1100;
-  const gameVersion = '2';
+  const gameVersion = '3';
+  const halfCycleMs = 900;
+  const maxAttemptMs = 8000;
+  const bestByMode = { precision: 0, 'motion-free': 0 };
   let state = 'idle';
-  let scores = [];
-  let sessionBest = 0;
-  let combo = 0;
-  let bestCombo = 0;
-  let start = 0;
+  let startedAt = 0;
   let frame = 0;
-  let nextHitTimer = 0;
   let runId = '';
+  const mode = () => WP.reducedMotion ? 'motion-free' : 'precision';
+  const clamp = value => Math.max(0, Math.min(1, value));
 
-  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
   function scoreForPosition(position) {
     if (!Number.isFinite(position)) return 0;
-    const distance = Math.abs(clamp(position, 0, 1) - .5);
-    // A small, attainable bullseye; precision outside it falls off smoothly.
-    const accuracy = clamp(1 - Math.max(0, distance - .01) / .49, 0, 1);
-    return Math.round(333 * accuracy);
+    // The narrow centre zone is a real, attainable 999. Beyond it, accuracy
+    // falls smoothly to zero at either end; early and late hits score equally.
+    const distance = Math.abs(clamp(position) - .5);
+    return Math.round(999 * clamp(1 - Math.max(0, distance - .012) / .488));
   }
   function scoreForElapsed(elapsedMs) {
     return scoreForPosition(elapsedMs / 2000);
   }
-  function positionAt(elapsedMs, hitIndex) {
-    const index = clamp(Math.trunc(hitIndex) || 0, 0, 2);
-    const t = (Math.max(0, elapsedMs) / halfCycles[index]) % 2;
-    const position = t <= 1 ? t : 2 - t;
-    return index % 2 === 0 ? position : 1 - position;
+  function positionAt(elapsedMs) {
+    if (!Number.isFinite(elapsedMs)) return 0;
+    const progress = (Math.max(0, elapsedMs) / halfCycleMs) % 2;
+    return progress <= 1 ? progress : 2 - progress;
   }
-  function runScore(hits) {
-    return hits.slice(0, 3).reduce((total, score) => total + clamp(Math.round(Number(score) || 0), 0, 333), 0);
-  }
-  window.WP_GAME_MATH = Object.freeze({ scoreForPosition, scoreForElapsed, positionAt, runScore });
+  window.WP_GAME_MATH = Object.freeze({ scoreForPosition, scoreForElapsed, positionAt });
 
-  function setState(value) {
-    state = value;
-    arena.dataset.state = value;
+  function setState(next) {
+    state = next;
+    arena.dataset.state = next;
   }
-  function stopTimers() {
+  function stopClock() {
     cancelAnimationFrame(frame);
-    clearTimeout(nextHitTimer);
     frame = 0;
-    nextHitTimer = 0;
-  }
-  function setAction(label, locked = false) {
-    buttonLabel.textContent = label;
-    // Retain keyboard focus between linked hits while ignoring extra presses.
-    mainButton.setAttribute('aria-disabled', String(locked));
-  }
-  function updateRoundDisplay() {
-    $$('.round-cell').forEach((cell, index) => {
-      cell.classList.toggle('current', index === scores.length && scores.length < 3);
-      cell.classList.toggle('done', scores[index] !== undefined);
-      cell.dataset.quality = scores[index] === 333 ? 'perfect' : scores[index] >= 300 ? 'sharp' : '';
-      $('[data-round-score]', cell).textContent = scores[index] === undefined ? '—' : String(scores[index]).padStart(3, '0');
-      cell.setAttribute('aria-label', `${hitNames[index]}: ${scores[index] === undefined ? 'not played' : `${scores[index]} out of 333`}`);
-    });
-    $('#round-indicator').textContent = scores.length < 3 ? `${hitNames[scores.length].toUpperCase()} · ${scores.length + 1} / 3` : 'RUN COMPLETE';
-    const comboLabel = $('#game-combo');
-    if (comboLabel) comboLabel.textContent = combo > 1 ? `${combo} HIT COMBO` : combo === 1 ? 'SHARP HIT' : 'BUILD YOUR COMBO';
-    const progress = $('#game-progress');
-    if (progress) progress.textContent = `${scores.length} of 3 hits · ${runScore(scores)} / 999`;
-    arena.dataset.combo = String(combo);
   }
   function showMode() {
-    const reduced = WP.reducedMotion;
-    $('#game-mode-label').textContent = reduced ? 'ONE-SECOND MODE' : 'THREE-HIT COMBO';
-    $('#timing-meter').hidden = reduced;
-    $('.meter-axis').hidden = reduced;
-    $('.timing-labels > span:first-child').textContent = reduced ? 'COUNT ONE SECOND' : 'HIT THE CENTRE';
-    $('#reduced-game-instructions').hidden = !reduced;
+    $('#timing-meter').hidden = WP.reducedMotion;
+    $('#meter-hint').hidden = WP.reducedMotion;
+    $('#reduced-game-instructions').hidden = !WP.reducedMotion;
+    $('#game-instructions').textContent = WP.reducedMotion
+      ? 'Start. Count one second. Punch.'
+      : 'Start. Watch the line. Hit the centre.';
+    $('#session-best').textContent = String(bestByMode[mode()]).padStart(3, '0');
   }
-  function resetSet(message) {
-    stopTimers();
-    scores = [];
-    combo = 0;
-    bestCombo = 0;
-    runId = '';
+  function reset(message) {
+    stopClock();
     setState('idle');
-    countTo(scoreElement, 0, cabinet, 0);
-    clearMachine(cabinet);
+    runId = '';
     marker.style.left = '0%';
-    setAction('Start your run');
-    mainButton.classList.remove('is-aiming');
-    feedback.textContent = message || (WP.reducedMotion ? 'Three hits. Start each one, count a second, then punch. Every hit adds to your total.' : 'Jab. Cross. Hook. Land three centre hits as the pace rises. Every hit counts.');
-    result.hidden = true;
-    $('#score-share-fallback').hidden = true;
-    updateRoundDisplay();
+    buttonLabel.textContent = 'Start';
+    button.setAttribute('aria-label', 'Start your attempt');
+    scoreElement.textContent = '000';
+    feedback.textContent = message || 'How close can you get?';
     showMode();
   }
-  function pauseRun(reason) {
-    if (state !== 'aiming' && state !== 'scored') return;
-    stopTimers();
-    setState('paused');
-    mainButton.classList.remove('is-aiming');
-    setAction(`Resume · ${hitNames[scores.length]}`);
-    feedback.textContent = reason;
+  function interrupt() {
+    if (state !== 'aiming') return;
+    reset('Ready when you are. Tap Start for a fresh attempt.');
   }
   function animate(now) {
     if (state !== 'aiming') return;
-    const elapsed = now - start;
-    if (elapsed >= maxHitMs) { finishHit(true); return; }
-    if (!WP.reducedMotion) marker.style.left = `${positionAt(elapsed, scores.length) * 100}%`;
+    const elapsed = now - startedAt;
+    if (elapsed >= maxAttemptMs) {
+      reset('Missed that one. Tap Start and have another go.');
+      return;
+    }
+    if (!WP.reducedMotion) marker.style.left = `${positionAt(elapsed) * 100}%`;
     frame = requestAnimationFrame(animate);
   }
-  function startHit() {
+  function startAttempt() {
     if (document.hidden) return;
-    stopTimers();
-    if (scores.length >= 3) resetSet();
-    if (!runId) runId = window.crypto?.randomUUID?.() || `run-${Date.now()}-${performance.now()}`;
-    result.hidden = true;
+    stopClock();
+    runId = window.crypto?.randomUUID?.() || `hit-${Date.now()}-${performance.now()}`;
+    startedAt = performance.now();
     setState('aiming');
-    start = performance.now();
-    marker.style.left = `${positionAt(0, scores.length) * 100}%`;
-    setAction(WP.reducedMotion ? `${hitNames[scores.length]} · punch at 1 second` : `${hitNames[scores.length]} · punch!`);
-    mainButton.classList.add('is-aiming');
-    feedback.textContent = WP.reducedMotion ? `Count one second, then punch. ${333 * (3 - scores.length)} points still to play for.` : scores.length === 0 ? 'Hit the bright centre line. The next two hits follow automatically.' : `${hitNames[scores.length]} is faster. Aim for the centre${combo ? ' and keep your combo going' : ''}.`;
-    updateRoundDisplay();
+    scoreElement.textContent = '000';
+    marker.style.left = '0%';
+    buttonLabel.textContent = 'Punch';
+    button.setAttribute('aria-label', WP.reducedMotion ? 'Punch at one second' : 'Punch when the line reaches the centre');
+    feedback.textContent = WP.reducedMotion ? 'Count one second…' : 'Hit the centre.';
     frame = requestAnimationFrame(animate);
   }
-  function finishHit(timedOut = false) {
+  function finishAttempt() {
     if (state !== 'aiming') return;
-    if (document.hidden) { pauseRun('Paused while you were away. Your completed hits are saved; resume when you’re ready.'); return; }
-    const elapsed = performance.now() - start;
-    stopTimers();
-    const hitIndex = scores.length;
-    const position = positionAt(elapsed, hitIndex);
-    if (!WP.reducedMotion) marker.style.left = `${position * 100}%`;
-    const score = timedOut ? 0 : WP.reducedMotion ? scoreForElapsed(elapsed) : scoreForPosition(position);
-    scores.push(score);
-    combo = score >= 300 ? combo + 1 : 0;
-    bestCombo = Math.max(bestCombo, combo);
-    const total = runScore(scores);
-    countTo(scoreElement, total, cabinet, 350);
-    if (!timedOut) hitMachine(cabinet);
-    mainButton.classList.remove('is-aiming');
-    updateRoundDisplay();
-    const grade = score === 333 ? 'Bullseye!' : score >= 300 ? 'Sharp hit!' : score >= 250 ? 'Clean hit.' : score >= 160 ? 'A glancing hit.' : 'Off centre — find your rhythm.';
-    const hitFeedback = timedOut ? `${hitNames[hitIndex]} timed out. +0.` : `${grade} +${score}${combo > 1 ? ` · ${combo}-hit combo!` : '.'}`;
-    if (scores.length === 3) {
-      setState('complete');
-      const previousBest = sessionBest;
-      sessionBest = Math.max(sessionBest, total);
-      $('#session-best').textContent = String(sessionBest).padStart(3, '0');
-      feedback.textContent = `${hitFeedback} ${total} / 999.${total > previousBest && previousBest > 0 ? ' New best this visit!' : ''}`;
-      setAction('Beat that · play again');
-      $('#final-score').textContent = String(total).padStart(3, '0');
-      $('#final-message').textContent = total === 999 ? 'Three bullseyes. A perfect run. Can you do it twice?' : total >= 900 ? `That’s sharp. Just ${999 - total} points from a perfect run.` : total >= 700 ? 'You’ve found your rhythm. Now put three sharp hits together.' : 'One more go. Watch the centre, trust your timing, and make every hit count.';
-      result.hidden = false;
-      // An adapter can submit this completed run only after a backend is configured.
-      document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: Object.freeze({
-        runId, score: total, hitScores: Object.freeze([...scores]), bestCombo,
-        mode: WP.reducedMotion ? 'motion-free' : 'precision', version: gameVersion
-      }) }));
-    } else {
-      setState('scored');
-      if (WP.reducedMotion) {
-        feedback.textContent = `${hitFeedback} ${total} / 999 so far. Start ${hitNames[scores.length].toLowerCase()} when ready.`;
-        setAction(`Start ${hitNames[scores.length].toLowerCase()}`);
-      } else {
-        feedback.textContent = `${hitFeedback} ${hitNames[scores.length]} is next. Get ready…`;
-        setAction(`${hitNames[scores.length]} coming up…`, true);
-        nextHitTimer = setTimeout(startHit, nextHitDelayMs);
-      }
-    }
+    if (document.hidden) { interrupt(); return; }
+    const elapsed = performance.now() - startedAt;
+    if (elapsed >= maxAttemptMs) { reset('Missed that one. Tap Start and have another go.'); return; }
+    stopClock();
+    const position = positionAt(elapsed);
+    marker.style.left = `${position * 100}%`;
+    const score = WP.reducedMotion ? scoreForElapsed(elapsed) : scoreForPosition(position);
+    const previousBest = bestByMode[mode()];
+    bestByMode[mode()] = Math.max(previousBest, score);
+    scoreElement.textContent = String(score).padStart(3, '0');
+    $('#session-best').textContent = String(bestByMode[mode()]).padStart(3, '0');
+    setState('complete');
+    buttonLabel.textContent = 'Go again';
+    button.setAttribute('aria-label', 'Start another attempt');
+    const reaction = score === 999 ? 'Perfect. Can you do it again?'
+      : score >= 950 ? 'So close. One more go?'
+      : score >= 800 ? 'Nearly there. Try again.'
+      : 'Try again. You can do better.';
+    feedback.textContent = `${reaction}${score > previousBest && previousBest > 0 ? ' New best this visit.' : ''}`;
+    document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: Object.freeze({
+      runId, score, mode: mode(), version: gameVersion
+    }) }));
   }
-  mainButton.addEventListener('click', () => {
-    if (mainButton.getAttribute('aria-disabled') === 'true') return;
-    if (state === 'aiming') finishHit();
-    else startHit();
+  function act() {
+    if (state === 'aiming') finishAttempt();
+    else startAttempt();
+  }
+  button.addEventListener('click', act);
+  button.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    // Handle press rather than release, and suppress the native extra click.
+    event.preventDefault();
+    if (!event.repeat) act();
   });
-  mainButton.addEventListener('keydown', event => {
-    if (event.repeat && ['Enter', ' '].includes(event.key)) event.preventDefault();
-  });
-  $('#game-reset').addEventListener('click', () => {
-    resetSet('Fresh run. Your best completed score this visit is kept.');
-    mainButton.focus({ preventScroll: true });
-  });
-  $('#play-again').addEventListener('click', () => {
-    resetSet();
-    mainButton.scrollIntoView({ behavior: WP.reducedMotion ? 'auto' : 'smooth', block: 'center' });
-    mainButton.focus({ preventScroll: true });
-  });
-  $('#share-score').addEventListener('click', async () => {
-    if (scores.length !== 3) return;
-    const text = `Jab. Cross. Hook. I scored ${runScore(scores)}/999 on Wycombe Punch. Three hits — can you beat it? https://wycombepunch.com/play.html`;
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(text);
-      toast('Score copied. Your move — challenge someone.');
-    } catch (_) {
-      const fallback = $('#score-share-fallback');
-      fallback.value = text;
-      fallback.hidden = false;
-      fallback.focus();
-      fallback.select();
-      toast('Select and copy your score message below.');
-    }
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pauseRun('Paused while you were away. Your completed hits are saved; resume when you’re ready.');
-  });
-  document.addEventListener('wp:motion', () => {
-    resetSet(WP.reducedMotion ? 'One-second mode. Start each hit, count one second, then punch.' : 'Three-hit combo mode. Hit the centre as the pace rises.');
-  });
-  window.addEventListener('pagehide', () => pauseRun('Your run is paused. Resume when you’re ready.'));
-  resetSet();
-  mainButton.disabled = false;
-  $('#game-reset').disabled = false;
+  document.addEventListener('visibilitychange', () => { if (document.hidden) interrupt(); });
+  document.addEventListener('wp:motion', () => reset('Ready. The timing mode has changed.'));
+  window.addEventListener('blur', interrupt);
+  window.addEventListener('pagehide', interrupt);
+  reset();
+  button.disabled = false;
 })();

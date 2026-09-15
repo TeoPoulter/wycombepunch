@@ -23,14 +23,14 @@ function setup() {
 }
 
 function request(method = 'GET', body, extra = {}) {
-  return new Request('https://score.example/daily-score?version=2&mode=precision', {
+  return new Request('https://score.example/daily-score?version=3&mode=precision', {
     method,
     headers: { Origin: origin, 'CF-Connecting-IP': '192.0.2.1',
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...extra },
     ...(body !== undefined ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {})
   });
 }
-const run = (hits, mode = 'precision') => ({ version: '2', mode, hitScores: hits, score: hits.reduce((a, b) => a + b, 0) });
+const run = (score, mode = 'precision') => ({ version: '3', mode, score });
 
 test('UK dates reset at local midnight on ordinary days and clock-change days', () => {
   const examples = [
@@ -52,7 +52,7 @@ test('empty day is null; a played zero is a real zero', async () => {
   try {
     const initial = await handleRequest(request(), env, clock);
     assert.equal((await initial.json()).highScore, null);
-    const submitted = await handleRequest(request('POST', run([0, 0, 0])), env, clock);
+    const submitted = await handleRequest(request('POST', run(0)), env, clock);
     assert.equal(submitted.status, 200);
     assert.equal((await submitted.json()).highScore, 0);
   } finally { db.close(); }
@@ -61,8 +61,8 @@ test('empty day is null; a played zero is a real zero', async () => {
 test('simultaneous submissions preserve maximum using real SQLite upsert', async () => {
   const { db, env } = setup();
   try {
-    const submissions = [[200, 300, 250], [333, 333, 332], [1, 2, 3], [330, 330, 330], [0, 0, 0]];
-    const responses = await Promise.all(submissions.map(hits => handleRequest(request('POST', run(hits)), env, clock)));
+    const submissions = [750, 998, 6, 990, 0];
+    const responses = await Promise.all(submissions.map(score => handleRequest(request('POST', run(score)), env, clock)));
     assert.ok(responses.every(response => response.status === 200));
     const stored = await handleRequest(request(), env, clock);
     assert.equal((await stored.json()).highScore, 998);
@@ -73,10 +73,10 @@ test('simultaneous submissions preserve maximum using real SQLite upsert', async
 test('new UK day and different motion mode have separate records', async () => {
   const { db, env } = setup();
   try {
-    await handleRequest(request('POST', run([333, 333, 333])), env, () => new Date('2026-07-05T22:59:59Z'));
+    await handleRequest(request('POST', run(999)), env, () => new Date('2026-07-05T22:59:59Z'));
     const midnight = await handleRequest(request(), env, () => new Date('2026-07-05T23:00:00Z'));
     assert.equal((await midnight.json()).highScore, null);
-    const differentMode = await handleRequest(request('POST', run([100, 200, 300], 'motion-free')), env, () => new Date('2026-07-05T22:59:59Z'));
+    const differentMode = await handleRequest(request('POST', run(600, 'motion-free')), env, () => new Date('2026-07-05T22:59:59Z'));
     assert.equal((await differentMode.json()).highScore, 600);
     const precision = await handleRequest(request(), env, () => new Date('2026-07-05T22:59:59Z'));
     assert.equal((await precision.json()).highScore, 999);
@@ -84,9 +84,9 @@ test('new UK day and different motion mode have separate records', async () => {
 });
 
 test('scores, modes and game versions are checked before storage', async () => {
-  const invalid = [null, [], {}, run([333, 333]), { ...run([1, 2, 3]), score: 999 },
-    run([-1, 0, 0]), run([334, 1, 1]), run([1.1, 2, 3]), run([1, 2, 3], 'other'),
-    { ...run([1, 2, 3]), version: '1' }, { ...run([1, 2, 3]), score: '6' }];
+  const invalid = [null, [], {}, run(undefined), run(-1), run(1000), run(1.1),
+    run('999'), run(null), run(true), run(500, 'other'), { ...run(500), version: '1' },
+    { version: '2', mode: 'precision', score: 999, hitScores: [333, 333, 333] }];
   const { db, env } = setup();
   try {
     for (const payload of invalid) {
@@ -97,6 +97,25 @@ test('scores, modes and game versions are checked before storage', async () => {
   } finally { db.close(); }
 });
 
+test('new game records stay independent of earlier game versions', async () => {
+  const { db, env } = setup();
+  try {
+    db.prepare('INSERT INTO daily_scores VALUES (?, ?, ?, ?, ?)')
+      .run('2026-09-15', '2', 'precision', 999, instant);
+    const initial = await handleRequest(request(), env, clock);
+    assert.equal((await initial.json()).highScore, null);
+    const submitted = await handleRequest(request('POST', run(950)), env, clock);
+    const record = await submitted.json();
+    assert.equal(record.version, '3');
+    assert.equal(record.highScore, 950);
+    assert.equal(db.prepare('SELECT score FROM daily_scores WHERE version = ?').get('2').score, 999);
+    const outdated = new Request('https://score.example/daily-score?version=2&mode=precision', {
+      headers: { Origin: origin }
+    });
+    assert.equal((await handleRequest(outdated, env, clock)).status, 400);
+  } finally { db.close(); }
+});
+
 test('origin, method, body size, JSON, rate and service failures are explicit', async () => {
   const { db, env } = setup();
   try {
@@ -104,7 +123,7 @@ test('origin, method, body size, JSON, rate and service failures are explicit', 
     assert.equal(denied.status, 403);
     assert.equal(denied.headers.get('Access-Control-Allow-Origin'), null);
     assert.equal((await handleRequest(request('OPTIONS'), env, clock)).status, 204);
-    assert.equal((await handleRequest(request('PUT', run([1, 2, 3])), env, clock)).status, 405);
+    assert.equal((await handleRequest(request('PUT', run(6)), env, clock)).status, 405);
     assert.equal((await handleRequest(request('POST', 'x'.repeat(1025)), env, clock)).status, 413);
     assert.equal((await handleRequest(request('POST', '{'), env, clock)).status, 400);
     assert.equal((await handleRequest(request('POST', '{}', { 'Content-Type': 'text/plain' }), env, clock)).status, 415);

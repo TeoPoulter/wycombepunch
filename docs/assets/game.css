@@ -1,0 +1,45 @@
+/* A single, uncluttered play surface. All styles are confined to the game page. */
+.hit-game-heading { max-width: 700px; margin-inline: auto; padding-block: 36px 24px; text-align: center; }
+.hit-game-heading h1 { font-size: clamp(3.5rem, 11vw, 5.5rem); line-height: 1; }
+.hit-game-heading h1 em { margin-left: .12em; }
+.hit-game-heading p { margin-top: 14px; font-size: 1rem; line-height: 1.5; }
+.hit-game { max-width: 620px; margin-inline: auto; padding: 28px 36px 24px; border: 1px solid #3b3037; border-radius: 18px; background: #131317; text-align: center; }
+.hit-score-label { display: block; color: #adaab4; font-size: .75rem; line-height: 1.5; }
+.hit-score { display: block; margin-top: 4px; color: var(--white); font-family: var(--display); font-size: clamp(4rem, 24vw, 7rem); line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.hit-game[data-state="complete"] .hit-score { color: var(--red); }
+.hit-meter { position: relative; height: 30px; margin: 25px 5px 10px; border: 1px solid #4a4249; border-radius: 6px; background: #252127; }
+.hit-meter-target { position: absolute; inset: 0 auto 0 48.8%; width: 2.4%; background: var(--red); }
+.hit-meter-target::before { content: ''; position: absolute; top: -8px; left: 50%; width: 0; height: 0; border: 5px solid transparent; border-top-color: var(--red); transform: translateX(-50%); }
+.hit-meter-cursor { position: absolute; left: 0; top: -5px; bottom: -5px; width: 4px; border-radius: 2px; background: var(--white); transform: translateX(-50%); box-shadow: 0 0 0 2px #0b0b0e; }
+.hit-meter-hint, .hit-motion-note { color: #aaa5b1; font-size: .75rem; line-height: 1.6; }
+.hit-motion-note { margin-top: 20px; }
+.hit-button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; width: min(100%, 240px); margin-top: 14px; padding: 0 15px 9px; background: transparent; border: 0; border-radius: 12px; color: var(--white); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.hit-button svg { display: block; width: 92px; height: 115px; overflow: visible; pointer-events: none; }
+.hit-button-label { display: block; width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid transparent; border-radius: 7px; background: var(--red); color: #0b0b0e; font-size: 1rem; font-weight: 750; line-height: 1.5; }
+.hit-button:hover .hit-button-label { background: var(--red-hover); }
+.hit-button:disabled { opacity: .5; }
+.hit-game[data-state="aiming"] .hit-button-label { background: var(--white); }
+.hit-game[data-state="complete"] .hit-button svg { animation: hit-bag-kick .42s ease-out; transform-origin: 50% 0; }
+@keyframes hit-bag-kick { 0% { transform: rotate(0); } 28% { transform: rotate(-16deg); } 64% { transform: rotate(8deg); } 100% { transform: rotate(0); } }
+.hit-feedback { display: flex; align-items: center; justify-content: center; min-height: 3.2em; margin: 13px auto 0; max-width: 34ch; font-size: .875rem; line-height: 1.6; color: #d2ccd6; }
+.hit-best { margin-top: 18px; padding-top: 18px; border-top: 1px solid #343039; color: #aaa5b1; font-size: .8125rem; line-height: 1.6; }
+.hit-best strong { margin-left: 8px; color: var(--white); font-family: var(--mono); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.hit-help { max-width: 620px; margin: 16px auto 0; color: #9993a1; font-size: .75rem; line-height: 1.75; text-align: center; }
+.hit-help kbd { padding: 2px 4px; border: 1px solid #403a45; border-radius: 3px; font: inherit; }
+.hit-daily-score { padding-top: 18px; margin-top: 18px; border-top: 1px solid #343039; }
+.hit-daily-score > p:first-child { display: inline; color: #aaa5b1; font-size: .8125rem; }
+.hit-daily-score > strong { margin-left: 8px; font-family: var(--mono); font-size: .9375rem; }
+.hit-daily-score [data-daily-score-status] { margin: 6px auto 0; max-width: 42ch; color: #aaa5b1; font-size: .75rem; line-height: 1.6; }
+.hit-hire-link { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; max-width: 700px; margin: 40px auto 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+.hit-hire-link p { font-size: 1rem; color: var(--white); }
+.hit-hire-link .button { min-height: 48px; font-size: .875rem; }
+.motion-reduced .hit-game .hit-button svg { animation: none; }
+@media (prefers-reduced-motion: reduce) { .hit-game .hit-button svg { animation: none; } }
+@media (max-width: 580px) {
+  .hit-game-heading { padding-block: 26px 20px; }
+  .hit-game-heading p { font-size: .9375rem; }
+  .hit-game { padding: 24px 20px 20px; }
+  .hit-meter { margin-top: 22px; }
+  .hit-button { margin-top: 10px; }
+  .hit-hire-link { justify-content: center; text-align: center; margin-block: 30px 40px; }
+}

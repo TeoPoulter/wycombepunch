@@ -1,5 +1,5 @@
 /** Anonymous, casual daily record. Scores are client-reported, not cheat-proof. */
-export const GAME_VERSION = '2';
+export const GAME_VERSION = '3';
 export const MAX_BODY_BYTES = 1024;
 const MODES = new Set(['precision', 'motion-free']);
 const londonDate = new Intl.DateTimeFormat('en-GB', {
@@ -45,10 +45,9 @@ export function validateGame(value) {
   if (value.version !== GAME_VERSION || !MODES.has(value.mode)) {
     throw new HttpError(400, 'Unsupported game version or mode.');
   }
-  const hits = value.hitScores;
-  if (!Array.isArray(hits) || hits.length !== 3 ||
-      !hits.every(score => Number.isInteger(score) && score >= 0 && score <= 333) ||
-      !Number.isInteger(value.score) || value.score !== hits.reduce((a, b) => a + b, 0)) {
+  // Hit 999 is one attempt with one result. Older multi-hit games have their
+  // own version and cannot submit to this record.
+  if (!Number.isInteger(value.score) || value.score < 0 || value.score > 999) {
     throw new HttpError(400, 'Invalid score.');
   }
   return { version: GAME_VERSION, mode: value.mode, score: value.score };

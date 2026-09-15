@@ -1,6 +1,6 @@
-# Shared daily high score
+# Hit 999 shared daily high score
 
-This optional service stores one anonymous high score per UK calendar day, game version and game mode. The website continues to use GitHub Pages. The service can use its own `workers.dev` address, so `wycombepunch.com`, CNAME, DNS and HTTPS settings do not need to change.
+This optional service stores one anonymous high score per UK calendar day, game version and game mode. Hit 999 uses version 3: one attempt produces one integer score from 0 to 999. Records from the earlier three-hit game remain separate. The website continues to use GitHub Pages. The service can use its own `workers.dev` address, so `wycombepunch.com`, CNAME, DNS and HTTPS settings do not need to change.
 
 **Current state: implemented and locally tested; not deployed.** Leave `WP_CONFIG.dailyScore.endpoint` blank until a real service has been deployed and verified. The game hides the daily score while this setting is blank. It never substitutes a browser-only score for a global record.
 
@@ -40,9 +40,9 @@ The Worker uses parameter-bound D1 queries, with a single `MAX` upsert rather th
 
 ## Verify before enabling
 
-- Read `/daily-score?version=2&mode=precision` with an `Origin: https://wycombepunch.com` request header. An empty day must return `highScore: null`, a UK day and a future `resetAt`.
-- Test write/read behaviour against a separate staging database first. Three hit scores of `[300, 310, 320]` must give `score: 930`. A later lower submission must not reduce the record. Do not seed fabricated scores in the production database.
-- Verify a completed game from the deployed site sends the three hit scores and receives the stored result. In a second browser, reload the page and confirm it displays that same real score.
+- Read `/daily-score?version=3&mode=precision` with an `Origin: https://wycombepunch.com` request header. An empty day must return `highScore: null`, a UK day and a future `resetAt`.
+- Test write/read behaviour against a separate staging database first. A score of `930` must return at least `930`. A later lower submission must not reduce the record. Both `0` and `999` are valid scores; fractional, negative and above-target scores must be rejected. Do not seed fabricated scores in the production database.
+- Verify a completed game from the deployed site sends its single score and receives the stored result. In a second browser, reload the page and confirm it displays that same real score.
 - Verify the precision and motion-free modes show separate records, changing mode during a pending request cannot display the old mode's score, and a blocked/offline endpoint displays “Daily high score unavailable.”
 - Confirm tomorrow's record starts empty at midnight in `Europe/London`. The automated tests cover both UK clock-change days.
 
@@ -52,16 +52,16 @@ The game dispatches `wp:game-complete` on `document` with:
 
 ```js
 {
-  version: '2',
+  runId: 'local-run-id', // stays in the browser
+  version: '3',
   mode: 'precision', // or 'motion-free'
-  hitScores: [300, 310, 320], // exactly three integers in 0–333
-  score: 930 // sum of the three hits, in 0–999
+  score: 930 // one integer in 0–999
 }
 ```
 
-The client submits only these fields. Optional local `runId` or `bestCombo` event fields are ignored. A score response contains `day`, `timeZone`, `resetAt`, `version`, `mode` and `highScore`. Null means nobody has submitted a score that day; zero is a valid submitted result.
+The client submits only `version`, `mode` and `score`. The local `runId` is ignored and never transmitted. No per-hit array is required. Repeated submission of the same result is harmless because the atomic maximum update is idempotent. A score response contains `day`, `timeZone`, `resetAt`, `version`, `mode` and `highScore`. Null means nobody has submitted a score that day; zero is a valid submitted result.
 
-This is a casual, client-reported score board. Range/sum validation and request limits do not prove someone played honestly, and CORS is not authentication. It is unsuitable for prizes or claims of cheat-proof rankings. If scoring rules change, increment the game version in the game, client and Worker together to keep unlike scores separate.
+This is a casual, client-reported score board. Score-range validation and request limits do not prove someone played honestly, and CORS is not authentication. It is unsuitable for prizes or claims of cheat-proof rankings. If scoring rules change, increment the game version in the game, client and Worker together to keep unlike scores separate.
 
 ## Local checks
 
@@ -69,6 +69,6 @@ This is a casual, client-reported score board. Range/sum validation and request 
 npm test
 ```
 
-The tests use Node's built-in runner and SQLite. They check midnight and daylight-saving rollover, concurrent maximum updates, mode separation, invalid payloads and service failures, plus client hidden/unavailable states and late-response handling. They require no account or network access. These checks do not substitute for the deployed cross-browser verification above.
+The tests use Node's built-in runner and SQLite. They check midnight and daylight-saving rollover, concurrent maximum updates, mode and game-version separation, score boundaries, invalid payloads and service failures, plus client hidden/unavailable states and late-response handling. They require no account or network access. These checks do not substitute for the deployed cross-browser verification above.
 
 For interactive local Worker testing, initialise a local D1 database with `npx wrangler d1 execute wycombe-punch-daily-score --local --file=schema.sql`, then run `npm run dev`. Use a local-only origin override when testing a local webpage; preserve the production origin allowlist in `wrangler.jsonc`.

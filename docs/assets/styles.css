@@ -778,3 +778,27 @@ p,.preview-notice,.text-link,.button,.occasion-bottom { overflow-wrap: break-wor
 }
 
 .heading-stop { padding-inline-start: .075em; letter-spacing: 0; }
+
+/* Fewer labels, clearer event choices, and a properly framed video. */
+.occasions-grid-simple { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.occasions-grid-simple .occasion-card { min-height: 0; padding: 26px; }
+.occasions-grid-simple .occasion-card-top { margin-bottom: 16px; }
+.occasions-grid-simple .occasion-card h3 { font-size: 25px; line-height: 1.2; }
+.occasions-grid-simple .occasion-card .text-link { margin-bottom: 0; }
+.video-section { padding-top: 64px; }
+.video-section .section-heading { margin-bottom: 30px; }
+.video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #141419; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.video-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.video-credit { margin-top: 12px; color: #a4a4af; font-size: 12px; line-height: 1.6; }
+.video-credit a { text-decoration: underline; text-underline-offset: 3px; }
+.enquiry-contact a { overflow-wrap: anywhere; }
+.feature-tile h3 { margin-top: 0; }
+@media (max-width: 1000px) {
+  .occasions-grid-simple { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 580px) {
+  .occasions-grid-simple { grid-template-columns: minmax(0,1fr); }
+  .occasions-grid-simple .occasion-card { padding: 24px; }
+  .video-section { padding-top: 40px; }
+  .video-frame { border-radius: 8px; }
+}
