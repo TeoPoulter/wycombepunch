@@ -108,7 +108,7 @@
   if (nonEmpty(business.operatorName)) $$('[data-operator-name]').forEach(el => { el.textContent = business.operatorName.trim(); });
   if (emailValid(business.privacyEmail)) $$('[data-privacy-email]').forEach(a => { a.href = `mailto:${business.privacyEmail}`; a.textContent = business.privacyEmail; });
   if (nonEmpty(business.contactAddress)) $$('[data-operator-address]').forEach(el => { el.textContent = `Contact address: ${business.contactAddress.trim()}`; el.hidden = false; });
-  const identityReady = nonEmpty(business.operatorName) && emailValid(business.privacyEmail);
+  const identityReady = nonEmpty(business.operatorName) && (emailValid(business.privacyEmail) || /^[A-Za-z0-9_.]{1,30}$/.test(instagram));
   if (identityReady && config.enquiriesEnabled === true) $$('[data-legal-preview]').forEach(el => { el.hidden = true; });
   const providerNames = { netlify: 'Netlify Forms', formspree: 'Formspree', email: 'your chosen email application (draft only)' };
   $$('[data-form-provider]').forEach(el => { el.textContent = config.enquiriesEnabled === true ? (providerNames[formConfig.provider] || 'not configured') : 'not enabled for submissions'; });
@@ -118,6 +118,15 @@
   });
   const retention = Number(config.privacy?.enquiryRetentionMonths);
   if (Number.isInteger(retention) && retention > 0 && retention <= 120) $$('[data-retention-months]').forEach(el => { el.textContent = String(retention); });
+  const receiptMessage = $('[data-submission-message]');
+  if (receiptMessage) {
+    let sentAt = 0;
+    try { sentAt = Number(sessionStorage.getItem('wp:enquiry-sent')); } catch (_) { /* Neutral direct-visit copy remains. */ }
+    if (sentAt > 0 && Date.now() >= sentAt && Date.now() - sentAt < 600000) {
+      $('[data-submission-eyebrow]').textContent = 'ENQUIRY SENT';
+      receiptMessage.textContent = 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.';
+    }
+  }
   const guide = Number(config.pricing?.guidePriceGBP);
   if (config.pricing?.showGuidePrice === true && Number.isFinite(guide) && guide > 0) {
     $$('[data-price-guide]').forEach(el => { el.hidden = false; });
@@ -232,6 +241,17 @@
     const next = $('#form-next'), back = $('#form-back'), submit = $('#submit-enquiry');
     const submitLabel = $('#submit-label'), result = $('#form-result');
     const date = $('#event-date'), eventType = $('#event-type'), venue = $('#venue'), message = $('#message');
+    const duration = $('#duration'), durationOther = $('#duration-other'), durationDetail = $('#duration-detail');
+    function syncDuration() {
+      if (!durationOther || !durationDetail) return;
+      const custom = duration.value === 'Something else';
+      durationOther.hidden = !custom;
+      durationDetail.disabled = !custom;
+      durationDetail.required = custom;
+      if (!custom) durationDetail.setCustomValidity('');
+    }
+    duration.addEventListener('change', syncDuration);
+    syncDuration();
     let current = 0, submitting = false, lastDraft = '';
     const isLocal = location.protocol === 'file:' || ['', 'localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(location.hostname);
     const ready = config.enquiriesEnabled === true && identityReady && !isLocal;
@@ -250,7 +270,7 @@
         event: eventType.value || 'Not selected',
         date: date.value ? new Date(`${date.value}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be confirmed',
         venue: venue.value.trim() || 'To be confirmed',
-        duration: $('#duration').value || 'Something else'
+        duration: duration.value === 'Something else' && durationDetail?.value.trim() ? durationDetail.value.trim() : duration.value
       };
       $$('[data-summary]').forEach(el => { el.textContent = values[el.dataset.summary] || ''; });
       $('#message-count').textContent = String(message.value.length);
@@ -284,16 +304,18 @@
     next.addEventListener('click', () => { if (validateStep(current)) showStep(current + 1, true); });
     back.addEventListener('click', () => showStep(current - 1, true));
     document.addEventListener('wp:form-step', event => { if (!submitting) showStep(Number(event.detail) || 0); });
-    function showResult(title, messageText) {
+    function showResult(title, messageText, sent = false) {
       $('#form-result-title').textContent = title;
       $('#form-result-text').textContent = messageText;
+      $('#copy-enquiry').hidden = sent;
       result.hidden = false;
       result.focus({ preventScroll: true });
       result.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
     }
     function createDraft(data) {
       const value = (key, fallback='Not provided') => String(data.get(key) || '').trim() || fallback;
-      return ['WYCOMBE PUNCH — EVENT ENQUIRY','',`Name: ${value('name')}`,`Email: ${value('email')}`,`Phone: ${value('phone')}`,`Occasion: ${value('event-type')}`,`Date: ${value('event-date','Not confirmed yet')}`,`Hire duration: ${value('duration','Something else')}`,`Venue / town / postcode: ${value('venue')}`,'','Extra details:',value('message','None'),'','This is an enquiry, not a confirmed booking.'].join('\n');
+      const requestedDuration = value('duration') === 'Something else' ? value('duration-detail') : value('duration');
+      return ['WYCOMBE PUNCH — EVENT ENQUIRY','',`Name: ${value('name')}`,`Email: ${value('email')}`,`Phone: ${value('phone')}`,`Occasion: ${value('event-type')}`,`Date: ${value('event-date','Not confirmed yet')}`,`Hire duration: ${requestedDuration}`,`Venue / town / postcode: ${value('venue')}`,'','Extra details:',value('message','None'),'','This is an enquiry, not a confirmed booking.'].join('\n');
     }
     form.addEventListener('submit', async event => {
       event.preventDefault();
@@ -301,7 +323,7 @@
       if (current < 2) { if (validateStep(current)) showStep(current + 1, true); return; }
       for (let i = 0; i < steps.length; i++) if (!validateStep(i)) return;
       const data = new FormData(form);
-      if (String(data.get('bot-field') || '').trim()) return; // Ignore filled honeypots without network calls.
+      if (String(data.get('_gotcha') || data.get('bot-field') || '').trim()) return;
       for (const key of ['name','email','venue']) data.set(key, String(data.get(key) || '').trim());
       lastDraft = createDraft(data);
       $('#copy-fallback').hidden = true;
@@ -341,8 +363,13 @@
       try {
         const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type':'application/x-www-form-urlencoded', 'Accept': formConfig.provider === 'formspree' ? 'application/json' : 'text/html' }, body: new URLSearchParams(data).toString(), credentials: formConfig.provider === 'netlify' ? 'same-origin' : 'omit', signal: controller.signal });
         if (!response.ok) throw new Error(response.status === 429 ? 'rate-limit' : `HTTP ${response.status}`);
+        let receiptStored = false;
+        try { sessionStorage.setItem('wp:enquiry-sent', String(Date.now())); receiptStored = true; } catch (_) { /* Show the receipt here if storage is unavailable. */ }
         form.reset();
-        location.assign('thank-you.html'); // Only after the configured service returns a successful status.
+        syncDuration();
+        updateSummary();
+        if (receiptStored) location.assign('thank-you.html');
+        else showResult('Enquiry sent', 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.', true);
       } catch (error) {
         showResult('We could not confirm receipt', error.message === 'rate-limit' ? 'The form service is receiving too many requests. Please wait before retrying. Your details are still available to copy.' : 'Your details are still here. We could not confirm delivery; please check before retrying to avoid duplicate messages, or copy the enquiry and contact us another way. Nothing has been booked.');
       } finally {
@@ -358,7 +385,7 @@
       try {
         if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
         await navigator.clipboard.writeText(lastDraft);
-        toast('Enquiry copied. Nothing has been sent.');
+        toast('Enquiry details copied.');
       } catch (_) {
         const fallback = $('#copy-fallback');
         fallback.value = lastDraft; fallback.hidden = false; fallback.focus(); fallback.select();

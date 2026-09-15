@@ -62,7 +62,11 @@ class SiteTests(unittest.TestCase):
         page=Page((SITE/'index.html').read_text())
         self.assertIn('https://www.instagram.com/wycombepunchmachine/',page.links)
         frames=[a for tag,a in page.attrs if tag=='iframe']
-        self.assertEqual(len(frames),1)
-        self.assertEqual(frames[0]['src'],'https://www.youtube-nocookie.com/embed/84Cwevt3H8s')
-        self.assertNotIn('autoplay',frames[0].get('allow',''))
+        self.assertEqual(len(frames),0)
+        videos=[a for tag,a in page.attrs if tag=='video']
+        self.assertEqual(len(videos),1)
+        self.assertIn('muted',videos[0])
+        self.assertIn('playsinline',videos[0])
+        self.assertIn('controls',videos[0])
+        self.assertIn('assets/how-punch-machines-work.mp4',page.links)
 if __name__=='__main__': unittest.main()

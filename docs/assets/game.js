@@ -125,12 +125,37 @@
     if (state === 'aiming') finishAttempt();
     else startAttempt();
   }
-  button.addEventListener('click', act);
-  button.addEventListener('keydown', event => {
-    if (!['Enter', ' '].includes(event.key)) return;
-    // Handle press rather than release, and suppress the native extra click.
+  button.addEventListener('click', () => {
+    // Some browsers do not focus buttons after a mouse/touch click. Keep mixed
+    // pointer/keyboard play working without moving the page to the button.
+    button.focus({ preventScroll: true });
+    act();
+  });
+  document.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key) || event.defaultPrevented ||
+        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+        event.isComposing || document.hidden || button.disabled) return;
+    const target = event.target;
+    const fromButton = target === button || button.contains(target);
+    const control = target?.closest?.('a, button, input, textarea, select, summary, [contenteditable], [role="button"], [role="link"], [role="textbox"], [role="combobox"], [role="slider"], [role="spinbutton"], [tabindex]');
+    if (!fromButton && (target?.isContentEditable || control)) return;
+    const fromArena = arena.contains(target);
+    const bounds = button.getBoundingClientRect();
+    const buttonVisible = bounds.width > 0 && bounds.height > 0 &&
+      bounds.bottom > 0 && bounds.top < window.innerHeight &&
+      bounds.right > 0 && bounds.left < window.innerWidth;
+    // If a pointer-started attempt leaves focus on the page, accept its next
+    // punch while the game is visible. Ordinary page keys remain untouched.
+    const fromActivePage = state === 'aiming' && buttonVisible &&
+      (target === document.body || target === document.documentElement);
+    if (!fromButton && !fromArena && !fromActivePage) return;
+    // One document handler handles both routes. Cancel the browser's scroll /
+    // synthetic button click, and never let a held key play another attempt.
     event.preventDefault();
-    if (!event.repeat) act();
+    if (!event.repeat) {
+      button.focus({ preventScroll: true });
+      act();
+    }
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) interrupt(); });
   document.addEventListener('wp:motion', () => reset('Ready. The timing mode has changed.'));

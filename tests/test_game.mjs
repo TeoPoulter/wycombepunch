@@ -7,17 +7,46 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../docs/assets/game.js', import.meta.url), 'utf8');
 class Element {
-  constructor() { this.textContent = ''; this.hidden = false; this.style = {}; this.dataset = {}; this.attrs = {}; this.listeners = {}; }
+  constructor(tagName = 'DIV') {
+    this.tagName = tagName; this.textContent = ''; this.hidden = false; this.style = {};
+    this.dataset = {}; this.attrs = {}; this.listeners = {}; this.parentNode = null;
+    this.bounds = { width: 220, height: 180, top: 300, bottom: 480, left: 40, right: 260 };
+  }
   setAttribute(name, value) { this.attrs[name] = value; }
   getAttribute(name) { return this.attrs[name] ?? null; }
   addEventListener(type, callback) { (this.listeners[type] ||= []).push(callback); }
-  dispatchEvent(event) { for (const callback of this.listeners[event.type] || []) callback(event); }
-  click() { this.dispatchEvent({ type: 'click' }); }
+  dispatchEvent(event) {
+    event.target ||= this;
+    for (const callback of this.listeners[event.type] || []) callback(event);
+    if (event.bubbles !== false) this.parentNode?.dispatchEvent(event);
+  }
+  // Model browsers where a pointer click does not automatically focus a button.
+  click() { this.dispatchEvent({ type: 'click', detail: 1 }); }
+  focus(options) { this.ownerDocument.activeElement = this; this.focusOptions = options; }
+  contains(target) { for (let node = target; node; node = node.parentNode) if (node === this) return true; return false; }
+  getBoundingClientRect() { return this.bounds; }
+  closest(selector) {
+    for (let node = this; node; node = node.parentNode) {
+      const matches = selector.split(',').some(part => {
+        const value = part.trim();
+        const attribute = value.match(/^\[([^=\]]+)(?:="([^"]+)")?\]$/);
+        if (attribute) return attribute[2] ? node.attrs[attribute[1]] === attribute[2] : attribute[1] in node.attrs;
+        return node.tagName.toLowerCase() === value;
+      });
+      if (matches) return node;
+    }
+    return null;
+  }
 }
 function fixture(reduced = false) {
   const nodes = new Map();
   const $ = selector => {
-    if (!nodes.has(selector)) nodes.set(selector, new Element());
+    if (!nodes.has(selector)) {
+      const node = new Element(selector === '#game-button' ? 'BUTTON' : 'DIV');
+      node.ownerDocument = document;
+      node.parentNode = selector === '#game-arena' ? document.body : $('#game-arena');
+      nodes.set(selector, node);
+    }
     return nodes.get(selector);
   };
   let now = 0;
@@ -32,8 +61,11 @@ function fixture(reduced = false) {
     }
     now = target;
   }
-  const document = Object.assign(new Element(), { hidden: false });
-  const window = new Element();
+  const document = Object.assign(new Element('DOCUMENT'), { hidden: false });
+  document.documentElement = Object.assign(new Element('HTML'), { parentNode: document, ownerDocument: document });
+  document.body = Object.assign(new Element('BODY'), { parentNode: document.documentElement, ownerDocument: document });
+  document.activeElement = document.body;
+  const window = Object.assign(new Element('WINDOW'), { innerWidth: 800, innerHeight: 900 });
   window.WP = { $, reducedMotion: reduced };
   const events = [];
   document.addEventListener('wp:game-complete', event => events.push(event.detail));
@@ -43,15 +75,20 @@ function fixture(reduced = false) {
     cancelAnimationFrame: id => scheduled.delete(id),
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } }
   }));
+  function keyAt(target, key, options = {}) {
+    const event = { type: 'keydown', key, repeat: false, defaultPrevented: false,
+      preventDefault() { this.defaultPrevented = true; }, ...options };
+    target.dispatchEvent(event);
+    // Model the default button activation after an uncancelled key press.
+    if (options.nativeDefault && !event.defaultPrevented && target === $('#game-button') && [' ', 'Enter'].includes(key)) target.click();
+    return event.defaultPrevented;
+  }
   return {
-    $, document, window, events, advance,
+    $, document, window, events, advance, keyAt,
+    element: (tagName, attrs = {}, parent = $('#game-arena')) => Object.assign(new Element(tagName), { attrs, ownerDocument: document, parentNode: parent }),
     hit: () => $('#game-button').click(),
     state: () => $('#game-arena').dataset.state,
-    key: (key, repeat = false) => {
-      let prevented = false;
-      $('#game-button').dispatchEvent({ type: 'keydown', key, repeat, preventDefault() { prevented = true; } });
-      return prevented;
-    },
+    key: (key, repeat = false) => keyAt($('#game-button'), key, { repeat, nativeDefault: true }),
     hide: () => { document.hidden = true; document.dispatchEvent({ type: 'visibilitychange' }); },
     show: () => { document.hidden = false; document.dispatchEvent({ type: 'visibilitychange' }); }
   };
@@ -169,4 +206,88 @@ test('the target is attainable, symmetric and bounded with no random scoring', (
   assert.equal(math.scoreForPosition(NaN), 0);
   assert.equal(math.scoreForPosition(Infinity), 0);
   assert.equal(math.positionAt(NaN), 0);
+});
+
+test('a pointer-started attempt accepts Space or Enter without a second native activation', () => {
+  for (const key of [' ', 'Enter']) {
+    const game = fixture();
+    game.hit();
+    assert.equal(game.document.activeElement, game.$('#game-button'));
+    assert.equal(game.$('#game-button').focusOptions.preventScroll, true);
+    game.advance(450);
+    assert.equal(game.keyAt(game.document.activeElement, key, { nativeDefault: true }), true);
+    assert.equal(game.state(), 'complete');
+    assert.equal(game.events.length, 1);
+    assert.equal(game.events[0].score, 999);
+    assert.equal(game.$('#game-button').focusOptions.preventScroll, true);
+  }
+});
+
+test('Space or Enter still punches if a pointer-started game leaves focus on the page', () => {
+  for (const key of [' ', 'Enter']) {
+    const game = fixture();
+    game.hit(); game.advance(450);
+    game.document.activeElement = game.document.body;
+    assert.equal(game.keyAt(game.document.body, key), true, 'default page scrolling must be cancelled');
+    assert.equal(game.state(), 'complete');
+    assert.equal(game.events[0].score, 999);
+    assert.equal(game.document.activeElement, game.$('#game-button'));
+  }
+});
+
+test('page shortcuts stay normal before play, outside the game, and when the game is offscreen', () => {
+  const game = fixture();
+  assert.equal(game.keyAt(game.document.body, ' '), false);
+  assert.equal(game.state(), 'idle');
+  game.hit();
+  const outsideParagraph = game.element('P', {}, game.document.body);
+  assert.equal(game.keyAt(outsideParagraph, ' '), false);
+  game.$('#game-button').bounds.top = -200;
+  game.$('#game-button').bounds.bottom = -20;
+  assert.equal(game.keyAt(game.document.body, ' '), false);
+  assert.equal(game.state(), 'aiming');
+  assert.equal(game.events.length, 0);
+});
+
+test('editable elements and unrelated controls keep their keys even within the game area', () => {
+  const game = fixture();
+  game.hit(); game.advance(450);
+  const controls = ['INPUT', 'TEXTAREA', 'SELECT', 'A', 'BUTTON', 'SUMMARY'].map(tag => game.element(tag));
+  controls.push(game.element('DIV', { contenteditable: '' }));
+  controls.push(game.element('DIV', { role: 'textbox' }));
+  controls.push(game.element('DIV', { role: 'slider' }));
+  controls.push(game.element('DIV', { tabindex: '0' }));
+  const editableParent = game.element('DIV', { contenteditable: 'true' });
+  controls.push(game.element('SPAN', {}, editableParent));
+  controls.push(Object.assign(game.element('SPAN'), { isContentEditable: true }));
+  for (const control of controls) {
+    for (const key of [' ', 'Enter']) assert.equal(game.keyAt(control, key), false, control.tagName);
+  }
+  assert.equal(game.state(), 'aiming');
+  assert.equal(game.events.length, 0);
+});
+
+test('modifiers, composition and already-handled keys cannot trigger game actions', () => {
+  const game = fixture();
+  game.hit(); game.advance(450);
+  for (const option of ['altKey', 'ctrlKey', 'metaKey', 'shiftKey', 'isComposing']) {
+    for (const key of [' ', 'Enter']) assert.equal(game.keyAt(game.$('#game-button'), key, { [option]: true }), false);
+  }
+  game.keyAt(game.$('#game-button'), ' ', { defaultPrevented: true });
+  assert.equal(game.state(), 'aiming');
+  assert.equal(game.events.length, 0);
+});
+
+test('a held page key cannot finish or restart attempts, and the game surface works once per press', () => {
+  const game = fixture();
+  const gameCaption = game.element('P');
+  assert.equal(game.keyAt(gameCaption, ' '), true);
+  game.advance(450);
+  assert.equal(game.keyAt(game.document.body, ' ', { repeat: true }), true);
+  assert.equal(game.state(), 'aiming');
+  assert.equal(game.keyAt(gameCaption, 'Enter'), true);
+  assert.equal(game.state(), 'complete');
+  assert.equal(game.events.length, 1);
+  assert.equal(game.key(' ', true), true);
+  assert.equal(game.state(), 'complete');
 });
