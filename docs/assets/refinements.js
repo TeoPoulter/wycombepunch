@@ -46,6 +46,17 @@
     } catch (_) { navigate(); }
   }));
 
+  // One native button covers each card. It remains the single keyboard stop and
+  // uses app.js's existing event selection, validation and enquiry navigation.
+  document.querySelectorAll('.occasion-card').forEach(card => {
+    const button = card.querySelector('[data-event]');
+    const heading = card.querySelector('h3');
+    if (!button || !heading) return;
+    const label = button.textContent.replace(/\s+/g, ' ').trim();
+    const occasion = heading.textContent.replace(/\s+/g, ' ').trim();
+    button.setAttribute('aria-label', `${label}: ${occasion}`);
+  });
+
   document.querySelectorAll('[data-town]').forEach(button => button.addEventListener('click', () => {
     // app.js owns the selected town and the form value; this only presents its confirmation.
     const response = document.getElementById('coverage-response');

@@ -1,0 +1,53 @@
+/* One question at a time, with the site's own controls. */
+.enquiry-layout { gap: clamp(36px,6vw,88px); grid-template-columns: .85fr 1.15fr; }
+.enquiry-form-card { padding: clamp(24px,3vw,44px); background: linear-gradient(145deg,#1b1b22,#121216); border-color:#41414a; }
+.form-progress { height:3px; margin-bottom:32px; background:#2c2c34; }
+.form-step { min-height:350px; animation:question-enter .38s var(--ease); }
+.form-step h3 { font-size:clamp(30px,3vw,43px); line-height:1.12; letter-spacing:-.04em; max-width:17ch; }
+.form-step .form-hint { font-size:14px; line-height:1.65; margin:12px 0 28px; max-width:42ch; }
+.answer-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.answer-choice { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; min-height:64px; text-align:left; padding:15px; background:#101015; border:1px solid #40404a; border-radius:11px; font-size:14px; font-weight:600; line-height:1.4; transition:border-color .2s,background .2s,transform .2s; }
+.answer-choice > span:first-child { overflow-wrap:anywhere; }
+.answer-choice:hover { border-color:#89818a; transform:translateY(-2px); }
+.answer-choice[aria-checked=true] { border-color:var(--red); background:#ff284812; }
+.choice-check { display:grid; place-items:center; flex:0 0 21px; width:21px; height:21px; border:1px solid #555560; border-radius:50%; }
+.choice-check svg { width:15px; height:15px; opacity:0; transform:scale(.6); transition:opacity .2s,transform .2s; }
+.answer-choice[aria-checked=true] .choice-check { background:var(--red); border-color:var(--red); color:#0b0b0e; }
+.answer-choice[aria-checked=true] .choice-check svg { opacity:1; transform:none; }
+[data-choice-group=duration] { grid-template-columns:1fr; }
+.form-step input.answer-input { font-size:clamp(19px,2.1vw,26px); min-height:76px; padding:20px; background:#0f0f13; border-radius:12px; }
+.form-step textarea { font-size:16px; border-radius:12px; padding:18px; }
+.form-step input[aria-invalid=true], .form-step textarea[aria-invalid=true] { border-color:var(--red); }
+.question-error { margin-top:16px; color:#ff8295; font-size:14px; }
+.form-actions { border-top:1px solid var(--line); padding-top:24px; margin-top:26px; }
+.form-actions .button { font-size:14px; min-height:54px; }
+.form-step .duration-other label { margin-top:22px; font-size:16px; }
+.form-step .duration-other input { font-size:16px; }
+.quote-calendar { padding:16px; border:1px solid #38383f; background:#101015; border-radius:13px; }
+.calendar-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+.calendar-heading strong { text-align:center; font-size:16px; font-weight:650; }
+.calendar-heading button { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; border:1px solid #393942; border-radius:50%; background:transparent; }
+.calendar-heading button svg { width:18px; height:18px; }
+.calendar-heading button:disabled { opacity:.25; }
+.calendar-weekdays,.calendar-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; text-align:center; }
+.calendar-weekdays { margin-bottom:8px; color:#90909c; font:11px/1.5 var(--mono); }
+.calendar-days button { min-width:0; min-height:40px; padding:7px 0; background:transparent; border:1px solid transparent; border-radius:8px; font-size:14px; line-height:1.2; transition:background .18s,border-color .18s; }
+.calendar-days button:hover:not(:disabled) { background:#2a2029; border-color:#74606a; }
+.calendar-days button[aria-current=date] { border-color:#555560; }
+.calendar-days button[aria-pressed=true] { background:var(--red); color:#0b0b0e; font-weight:750; border-color:var(--red); }
+.calendar-days button:disabled { opacity:.22; }
+.date-undecided { margin-top:13px; padding:12px 16px; width:100%; min-height:46px; border:1px solid #41414a; background:transparent; border-radius:8px; font-size:13px; }
+.date-undecided[aria-pressed=true] { background:#ff284812; border-color:var(--red); }
+.date-selection { min-height:23px; margin-top:9px; color:#d6d6dd; font-size:12px; text-align:center; }
+.enquiry-summary { margin-top:0; padding:0; background:transparent; border:0; }
+.enquiry-summary dl { margin:0; }
+.enquiry-summary dl div { display:grid; grid-template-columns:82px minmax(0,1fr) 34px; gap:12px; align-items:baseline; border-bottom:1px solid var(--line); padding:12px 0; margin:0; font-size:13px; }
+.enquiry-summary dd { text-align:left; }
+.review-edit { padding:5px 0; border:0; background:none; color:var(--white); font-size:11px; text-decoration:underline; text-underline-offset:3px; }
+.form-step .form-privacy { margin-top:21px; font-size:11px; line-height:1.7; }
+@keyframes question-enter { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+@media(max-width:800px) { .enquiry-layout { grid-template-columns:1fr; } .enquiry-form-card { max-width:650px; width:100%; margin-inline:auto; } .form-step { min-height:310px; } }
+@media(max-width:420px) { .enquiry-form-card { padding:24px 18px; } .answer-choices { grid-template-columns:1fr; gap:8px; } .answer-choice { min-height:54px; } .form-step h3 { font-size:31px; } .form-step .form-hint { font-size:13px; } .quote-calendar { padding:11px 8px; } .calendar-days { gap:2px; } .calendar-days button { min-height:36px; } .enquiry-summary dl div { grid-template-columns:62px minmax(0,1fr) 28px; gap:8px; font-size:12px; } }
+.motion-reduced .form-step { animation:none; }
+.motion-reduced .answer-choice { transition:none; transform:none; }
+@media(prefers-reduced-motion:reduce) { .form-step { animation:none; } .answer-choice,.choice-check svg,.calendar-days button { transition:none; } .answer-choice:hover { transform:none; } }

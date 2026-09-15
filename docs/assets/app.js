@@ -270,10 +270,13 @@
         event: eventType.value || 'Not selected',
         date: date.value ? new Date(`${date.value}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be confirmed',
         venue: venue.value.trim() || 'To be confirmed',
-        duration: duration.value === 'Something else' && durationDetail?.value.trim() ? durationDetail.value.trim() : duration.value
+        duration: duration.value === 'Something else' && durationDetail?.value.trim() ? durationDetail.value.trim() : duration.value || 'Not selected',
+        name: $('#name').value.trim(), phone: $('#phone').value.trim(), email: $('#email').value.trim(), message: message.value.trim() || 'None'
       };
       $$('[data-summary]').forEach(el => { el.textContent = values[el.dataset.summary] || ''; });
       $('#message-count').textContent = String(message.value.length);
+      const nextText = current === 4 && !message.value.trim() ? 'Skip for now' : current === steps.length - 2 ? 'Review my enquiry' : 'Continue';
+      $('#next-label').textContent = nextText;
     }
     function showStep(index, focus = false) {
       current = Math.max(0, Math.min(steps.length - 1, index));
@@ -281,28 +284,53 @@
       back.hidden = current === 0;
       next.hidden = current === steps.length - 1;
       submit.hidden = current !== steps.length - 1;
-      $('#step-indicator').textContent = `0${current+1} / 03`;
-      $('.enquiry-form-card').style.setProperty('--form-progress', `${(current+1)/3*100}%`);
+      $('#step-indicator').textContent = `${String(current+1).padStart(2,'0')} / ${String(steps.length).padStart(2,'0')}`;
+      $('.enquiry-form-card').style.setProperty('--form-progress', `${(current+1)/steps.length*100}%`);
       form.dataset.step = String(current);
-      const text = current === 0 ? 'Next: the details' : 'Next: your contact details';
-      next.firstChild.textContent = `${text} `;
       updateSummary();
-      if (focus) $('h3', steps[current]).focus({ preventScroll: true });
+      if (focus) {
+        const heading = $('h3', steps[current]);
+        heading.focus({ preventScroll: true });
+        const box = heading.getBoundingClientRect();
+        const headerHeight = $('.site-header')?.getBoundingClientRect().height || 90;
+        if (box.top < headerHeight + 16 || box.bottom > innerHeight - 90) heading.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+      }
+    }
+    function clearError(step) {
+      $('.question-error', step).hidden = true;
+      $$('[aria-invalid]', step).forEach(input => input.removeAttribute('aria-invalid'));
+    }
+    function invalid(index, text, control) {
+      showStep(index);
+      const error = $('.question-error', steps[index]);
+      error.textContent = text; error.hidden = false;
+      control?.setAttribute('aria-invalid','true');
+      control?.focus({preventScroll:true});
+      error.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block:'nearest' });
+      return false;
     }
     function validateStep(index) {
-      date.min = todayString();
+      clearError(steps[index]);
+      if (index === 0 && !eventType.value) return invalid(index, 'Choose your occasion to continue.', $('[data-choice-group="event-type"] button'));
+      if (index === 1) {
+        if (date.dataset.chosen !== 'true') return invalid(index, 'Choose a date, or select “Not decided yet”.', $('#date-undecided'));
+        if (date.value && (!/^\d{4}-\d{2}-\d{2}$/.test(date.value) || date.value < todayString())) return invalid(index, 'Choose today or a future date.', $('#date-undecided'));
+      }
+      if (index === 3 && !duration.value) return invalid(index, 'Choose a hire duration to continue.', $('[data-choice-group="duration"] button'));
       for (const input of $$('input,select,textarea', steps[index])) {
+        if (input.disabled || input.type === 'hidden') continue;
         input.setCustomValidity('');
-        if (input.required && typeof input.value === 'string' && !input.value.trim()) input.setCustomValidity('Please complete this field.');
-        if (input === date && date.value && date.value < date.min) input.setCustomValidity('Please choose today or a future date, or leave the date blank.');
-        if (!input.checkValidity()) { showStep(index); input.reportValidity(); return false; }
+        if (input.required && !input.value.trim()) return invalid(index, input === durationDetail ? 'Tell us how long you’re thinking.' : input.id === 'phone' ? 'Add a phone number we can reach you on.' : 'Please add your ' + ({venue:'venue, town or postcode',name:'name',email:'email address'}[input.id] || 'answer') + '.', input);
+        if (input.id === 'phone' && (!/^[+()\d\s.\-]+$/.test(input.value) || input.value.replace(/\D/g,'').length < 7 || input.value.replace(/\D/g,'').length > 15)) return invalid(index, 'Check your phone number, including the country code if needed.', input);
+        if (!input.checkValidity()) return invalid(index, input.id === 'email' ? 'Check your email address, for example you@example.com.' : 'Please check this answer.', input);
       }
       return true;
     }
-    form.addEventListener('input', event => { if (event.target.setCustomValidity) event.target.setCustomValidity(''); updateSummary(); });
-    form.addEventListener('change', updateSummary);
+    form.addEventListener('input', event => { if (event.target.setCustomValidity) event.target.setCustomValidity(''); clearError(steps[current]); updateSummary(); });
+    form.addEventListener('change', () => { clearError(steps[current]); updateSummary(); });
     next.addEventListener('click', () => { if (validateStep(current)) showStep(current + 1, true); });
     back.addEventListener('click', () => showStep(current - 1, true));
+    $$('[data-review-step]', form).forEach(button => button.addEventListener('click', () => showStep(Number(button.dataset.reviewStep), true)));
     document.addEventListener('wp:form-step', event => { if (!submitting) showStep(Number(event.detail) || 0); });
     function showResult(title, messageText, sent = false) {
       $('#form-result-title').textContent = title;
@@ -320,11 +348,11 @@
     form.addEventListener('submit', async event => {
       event.preventDefault();
       if (submitting) return;
-      if (current < 2) { if (validateStep(current)) showStep(current + 1, true); return; }
+      if (current < steps.length - 1) { if (validateStep(current)) showStep(current + 1, true); return; }
       for (let i = 0; i < steps.length; i++) if (!validateStep(i)) return;
       const data = new FormData(form);
       if (String(data.get('_gotcha') || data.get('bot-field') || '').trim()) return;
-      for (const key of ['name','email','venue']) data.set(key, String(data.get(key) || '').trim());
+      for (const key of ['name','email','venue','phone','duration-detail']) if (data.has(key)) data.set(key, String(data.get(key) || '').trim());
       lastDraft = createDraft(data);
       $('#copy-fallback').hidden = true;
       if (!ready) {

@@ -1,7 +1,7 @@
 # WYCOMBE PUNCH — REDESIGN 02
 ## Step up. Set the score.
 
-The static website source for **wycombepunch.com**, with an interactive arcade cabinet, the free **Hit 999** timing game and an event-enquiry form.
+The static website source for **wycombepunch.com**, with an interactive arcade cabinet, the free **Hit 999** timing game and a custom, one-question-at-a-time event enquiry with a final review.
 
 **Start with `documentation/START-HERE.md`.**
 
@@ -32,7 +32,7 @@ No framework, build command, package install, database, external font download o
 - The homepage cabinet responds to taps or clicks and displays its score once, on the cabinet. Copy and event cards are shorter, with the owner's price-match promise and “Get a quote in minutes” call to action.
 - **Hit 999** is a one-button timing game: start, then hit the centre for 999. It supports touch, mixed pointer/keyboard input without page scrolling, and a motion-free mode, with a best score for the current visit. The target stays 999 across layouts.
 - Events include weddings and walimas, family gatherings, community events, Eid, football, schools and teams. Coverage includes Holmer Green and Hazlemere. Hire duration offers only **3–5 hours**, **Full day** and **Something else**. The final choice reveals the required “How long you thinking?” field; it is omitted from submissions when a preset is selected.
-- Instagram links point to [@wycombepunchmachine](https://www.instagram.com/wycombepunchmachine/). The homepage hosts the supplied portrait explainer as an optimized H.264/AAC video. Its custom controls support playback, sound, seeking and fullscreen where permitted. It starts muted in view, pauses offscreen and respects manual pause, reduced-motion and data-saving preferences.
+- Instagram links point to [@wycombepunchmachine](https://www.instagram.com/wycombepunchmachine/). The homepage hosts the supplied portrait explainer as an optimized H.264/AAC video. Its custom controls support playback, sound, seeking and an accessible fullscreen overlay. It starts muted in view, pauses offscreen and respects manual pause, reduced-motion and data-saving preferences.
 - The favicon uses the punching bag. The cabinet logo is centred and its arrow separated from the bag; the score badge links to the game with a short transition. Town selection gets an animated confirmation.
 - The optional anonymous daily score is implemented in `docs/assets/daily-score.js` and `backend/`. Its endpoint is blank, so it is not connected. It needs a real deployed service, database, website privacy update and an end-to-end verification. See `backend/README.md`.
 

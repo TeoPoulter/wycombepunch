@@ -13,3 +13,26 @@
 .coverage-response.is-selected span { font-size: 12px; line-height: 1.5; }
 @media (max-width: 580px) { .experience-heading .section-intro { margin-top: 17px; } }
 @media (prefers-reduced-motion: reduce) { .score-art-tag[data-game-link], .score-art-tag[data-game-link] .icon { transition: none; } }
+
+/* The existing native event button covers the whole card; no nested button roles. */
+.occasion-card { position: relative; }
+.occasion-card [data-event] { position: static; }
+.occasion-card [data-event]::after { content: ""; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.occasion-card :is(a,button:not([data-event]),input,select,textarea,[contenteditable="true"]) { position: relative; z-index: 2; }
+.occasion-card:focus-within { outline: 3px solid var(--red); outline-offset: 4px; }
+button.home-base { width: 100%; color: var(--white); text-align: left; cursor: pointer; }
+button.home-base:hover,button.home-base[aria-pressed="true"] { border-color: var(--red); background: #361624; }
+button.home-base:focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
+
+/* Keep the price promise directly above the Instagram alternative. */
+.quote-social-group .quote-note { margin-bottom: 14px; }
+.quote-social-group .enquiry-contact { margin-top: 0; }
+.instagram-nudge { position: relative; width: fit-content; max-width: min(100%,22rem); margin: 31px 0 12px 0; padding: 14px 19px 12px 27px; border: 1px solid #d8788b; border-radius: 44% 56% 48% 52% / 9% 13% 8% 12%; color: #e6b1bc; font: 500 18px/1.4 'Bradley Hand','Segoe Print',cursive; transform: rotate(-2deg); }
+.instagram-nudge-arrow { position: absolute; left: 8px; top: -39px; width: 54px; height: 48px; overflow: visible; color: #e48a9e; }
+.instagram-nudge-arrow path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.reveal-ready .instagram-nudge-arrow path { stroke-dashoffset: 1; }
+.reveal-ready .in-view .instagram-nudge-arrow path { animation: instagram-arrow-draw .65s .12s ease-out both; }
+@keyframes instagram-arrow-draw { to { stroke-dashoffset: 0; } }
+.motion-reduced .instagram-nudge-arrow path { stroke-dashoffset: 0 !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .instagram-nudge-arrow path { stroke-dashoffset: 0 !important; animation: none !important; } }
+@media (max-width: 580px) { .instagram-nudge { max-width: calc(100% - 5px); font-size: 17px; } }
