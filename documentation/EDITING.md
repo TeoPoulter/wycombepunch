@@ -4,18 +4,18 @@
 
 | Change | File |
 |---|---|
-| Contact, Instagram, form routing, optional price | `site/assets/config.js` |
-| Homepage copy, event types, towns, FAQ, enquiry markup | `site/index.html` |
-| Game page copy and layout | `site/play.html` |
-| Palette, sizing, responsive layout, animations | `site/assets/styles.css` |
-| Shared interactions, form handling, sample scores | `site/assets/app.js` |
-| Actual timing game and scoring | `site/assets/game.js` |
-| Operator/privacy information and reviewed policy text | `site/privacy.html` plus config |
-| Booking guidance | `site/booking-information.html` |
-| Social link-preview image | `site/assets/social-share.jpg` |
-| Favicons and touch icons | `site/favicon.ico`, `site/assets/*icon*.png` |
+| Contact, Instagram, form routing, optional price | `docs/assets/config.js` |
+| Homepage copy, event types, towns, FAQ, enquiry markup | `docs/index.html` |
+| Game page copy and layout | `docs/play.html` |
+| Palette, sizing, responsive layout, animations | `docs/assets/styles.css` |
+| Shared interactions, form handling, sample scores | `docs/assets/app.js` |
+| Actual timing game and scoring | `docs/assets/game.js` |
+| Operator/privacy information and reviewed policy text | `docs/privacy.html` plus config |
+| Booking guidance | `docs/booking-information.html` |
+| Social link-preview image | `docs/assets/social-share.jpg` |
+| Favicons and touch icons | `docs/favicon.ico`, `docs/assets/*icon*.png` |
 
-No build process is required for direct HTML/CSS/JavaScript editing. The optional root `build.py` generates the shared page templates and metadata; rerunning it overwrites the corresponding generated HTML. Edit that template too if you plan to regenerate pages later.
+No build process is required. Edit the HTML, CSS and JavaScript in `docs/` directly. The historical `build.py` is retired and cannot regenerate the current website.
 
 ## Keep the versions together
 

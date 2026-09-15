@@ -6,7 +6,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 import base64, mimetypes
 ROOT=Path(__file__).resolve().parent.parent
-SITE=ROOT/'site'
+SITE=ROOT/'docs'
 def inline_page(filename='index.html', config_override=None):
     soup=BeautifulSoup((SITE/filename).read_text(), 'html.parser')
     scripts=[]

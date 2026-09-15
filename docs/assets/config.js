@@ -4,6 +4,7 @@
  * Read documentation/START-HERE.md before enabling live enquiries.
  */
 window.WP_CONFIG = Object.freeze({
+  dailyScore: { endpoint: '' }, // Add the deployed shared-score service URL when ready.
   enquiriesEnabled: false, // Safe preview: prepares/copies details, never pretends to send.
   business: {
     tradingName: 'Wycombe Punch',

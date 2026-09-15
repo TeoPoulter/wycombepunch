@@ -1,3 +1,9 @@
+"""Historical package generator, retained for reference.
+The live GitHub Pages source is docs/. Edit those static files directly.
+"""
+if __name__ == '__main__':
+    raise SystemExit('The live source is docs/. This historical generator is retired; edit docs/ directly.')
+
 from pathlib import Path
 import json, html
 ROOT = Path(__file__).parent

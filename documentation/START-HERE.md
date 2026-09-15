@@ -2,15 +2,15 @@
 
 ## 1. What to upload
 
-The public website is in `site/`. Upload its **contents**, so that `index.html`, `play.html` and `assets/` are at the hosting root. Do not upload the complete project as a folder inside your site.
+The public website is in `docs/`. Upload its **contents**, so that `index.html`, `play.html` and `assets/` are at the hosting root. Do not upload the complete project as a folder inside your site.
 
 The separate **Upload-Ready ZIP** already contains only those public files. Extract it before using a drag-and-drop host that expects a folder.
 
-You can open `site/index.html` in a browser to try the design and game. Opening local files deliberately keeps enquiries in preview mode.
+You can open `docs/index.html` in a browser to try the design and game. Opening local files deliberately keeps enquiries in preview mode.
 
 ## 2. Connect real contact details
 
-Open `site/assets/config.js` in a text editor. Set:
+Open `docs/assets/config.js` in a text editor. Set:
 
 ```js
 business: {
@@ -33,7 +33,7 @@ The contact information is public. Do not add passwords, private API keys or inf
 
 ### Route A — Netlify Forms
 
-1. Deploy the contents of `site/` to your Netlify project.
+1. Deploy the contents of `docs/` to your Netlify project.
 2. In that project's Forms area, **enable form detection**.
 3. Set `form.provider` to `'netlify'` and complete the operator/privacy information.
 4. Review the privacy notice, your business operation and the remaining launch checks below.
@@ -44,7 +44,7 @@ The contact information is public. Do not add passwords, private API keys or inf
 
 The JavaScript refuses to treat an unprocessed static HTML form as a working Netlify integration. Enabling submissions in config alone is not enough.
 
-For a Git-based deployment of the complete project, the root `netlify.toml` publishes `site/`. The `site/netlify.toml` is for deployment with `site/` itself as the project root. Use one layout consistently.
+For a Git-based deployment of the complete project, the root `netlify.toml` publishes `docs/`. The `docs/netlify.toml` is for deployment with `docs/` itself as the project root. Use one layout consistently.
 
 ### Route B — another static host + Formspree
 

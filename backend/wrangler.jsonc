@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wycombe-punch-daily-score",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://wycombepunch.com,https://www.wycombepunch.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wycombe-punch-daily-score",
+      "database_id": "REPLACE_WITH_CREATED_D1_DATABASE_ID"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "SCORE_RATE_LIMITER",
+      "namespace_id": "1509202601",
+      "simple": { "limit": 120, "period": 60 }
+    }
+  ]
+}

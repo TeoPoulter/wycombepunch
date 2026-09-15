@@ -187,8 +187,9 @@
       hero.setAttribute('aria-disabled', 'true');
       hitMachine(svg);
       countTo($('#hero-score'), score, svg, 720);
-      $('.score-caption').textContent = 'Just a demo. Your move.';
-      $('#hero-live').textContent = `Demo score ${score}. This is an illustration, not a strength measurement. Try the 999 Challenge for a timing game.`;
+      $('.score-caption').textContent = score >= 950 ? 'Now do it again.' : 'You can beat that.';
+      $('#hero-demo-note').textContent = score >= 950 ? 'That’s more like it. Got another one in you?' : 'Try again. You’ve got a higher score in you.';
+      $('#hero-live').textContent = `${score}. Have another go, or play Punch Rush to test your timing.`;
       setTimeout(() => { busy = false; hero.removeAttribute('aria-disabled'); }, reduced ? 200 : 1120);
     });
     hero.disabled = false;
@@ -239,7 +240,7 @@
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     };
     date.min = todayString();
-    const normalSubmitLabel = ready ? (formConfig.provider === 'email' ? 'Open my email enquiry' : 'Send my enquiry') : 'Prepare my enquiry';
+    const normalSubmitLabel = ready ? (formConfig.provider === 'email' ? 'Open my email enquiry' : 'Send my enquiry') : 'Prepare enquiry';
     submitLabel.textContent = normalSubmitLabel;
     if (ready) $('#preview-notice').hidden = true;
     else if (isLocal && config.enquiriesEnabled === true) $('#preview-notice').textContent = 'Local preview: submissions are deliberately disabled here. Test the live connection on your deployed site.';
@@ -305,7 +306,7 @@
       lastDraft = createDraft(data);
       $('#copy-fallback').hidden = true;
       if (!ready) {
-        showResult('Enquiry prepared — not sent', 'This website is in preview mode. You can copy your details below, but no message has been sent and no date has been reserved. The owner must connect the enquiry service before launch.');
+        showResult('Enquiry prepared — not sent', 'You can copy your event details below. No message has been sent and no date has been reserved.');
         return;
       }
       if (formConfig.provider === 'email') {

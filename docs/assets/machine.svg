@@ -19,7 +19,7 @@
 <path d="m284 221 91-12-1 96-91 12Z" fill="#060608" stroke="#4b4b54"/>
 <text x="329" y="230" fill="#a0a0ac" font-size="6" font-family="Arial,sans-serif" letter-spacing="1.4" text-anchor="middle">YOUR SCORE</text>
 <g data-led-display transform="translate(298 237)"><g data-digit="0" transform="translate(0 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g><g data-digit="1" transform="translate(25 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g><g data-digit="2" transform="translate(50 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g></g>
-<text x="329" y="299" fill="#8f8f9c" font-size="5.4" font-family="Arial,sans-serif" letter-spacing="1" text-anchor="middle">A LITTLE FRIENDLY COMPETITION</text>
+<text x="329" y="299" fill="#8f8f9c" font-size="5.4" font-family="Arial,sans-serif" letter-spacing="1" text-anchor="middle">ONE MORE GO?</text>
 <path d="m306 326 65-7v17l-65 7Z" fill="#111115" stroke="#4a4a53"/>
 <circle cx="319" cy="333" r="4" fill="#ff2848"/>
 <path d="m333 327 25-3v7l-25 3Z" fill="#030304" stroke="#44444e"/>
@@ -48,5 +48,4 @@
 <g class="impact-rays" stroke="#ff405a" stroke-width="3" stroke-linecap="round">
  <path d="m169 285-22-9m111 9 20-12m-70 98-8 21m-20-45-23 11m91-7 20 10m-27-99 6-15"/>
 </g>
-<text x="305" y="606" text-anchor="middle" fill="#777782" font-family="Arial,sans-serif" font-size="6" letter-spacing="3">WYCOMBE PUNCH / WP—01</text>
 </svg>

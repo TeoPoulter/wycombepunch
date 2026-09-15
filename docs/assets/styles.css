@@ -647,3 +647,134 @@ html.motion-reduced { scroll-behavior: auto; }
   .occasion-bottom { font-size: 8px; }
   .game-art-caption { font-size: 8px; }
 }
+
+/* Readable type, resilient cards and room for the signature red full stop. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+:is(.hero,.section-heading,.experience-grid,.feature-tile,.occasions-grid,.steps-grid,.coverage-layout,.faq-layout,.enquiry-layout,.game-layout,.game-page-heading,.game-explainer,.legal-layout,.brand-overview,.brand-principles,.footer-top,.field-row) > * { min-width: 0; }
+h1,h2,h3 { text-wrap: balance; }
+:is(h1,h2,h3,.brand,.score-art) .red { padding-inline-start: .075em; letter-spacing: 0; }
+p,.preview-notice,.text-link,.button,.occasion-bottom { overflow-wrap: break-word; }
+.button,.text-link { max-width: 100%; }
+.form-actions,.form-top,.console-top,.timing-labels,.game-stage-top,.game-stage-bottom,.footer-bottom nav { flex-wrap: wrap; }
+.form-actions .button { min-width: min(100%,9rem); }
+.occasion-bottom { white-space: normal; line-height: 1.6; }
+.form-step input,.form-step select,.form-step textarea,#copy-fallback,#score-share-fallback { font-size: 1rem; }
+.legal-content { max-width: 70ch; }
+.footer-wordmark { font-size: clamp(3rem,12.6vw,11.5rem); }
+
+/* Keep the decorative score and its label in separate rows at every width. */
+.experience-feature { container-type: inline-size; }
+.experience-feature > div:last-child { margin-top: 0; }
+.score-art { position: relative; inset: auto; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); align-items: end; gap: 18px 10px; transform: none; margin-block: 30px; width: 100%; }
+.score-art > span { font-size: clamp(2rem,17cqi,5.5rem); line-height: 1.1; white-space: nowrap; letter-spacing: -.025em; }
+.score-art > span:last-of-type { margin-top: 0; }
+.score-art-tag { position: static; grid-column: 1 / -1; justify-self: end; max-width: 100%; margin-top: 2px; padding: 10px 14px; gap: 12px; font-size: 11px; line-height: 1.5; overflow-wrap: break-word; }
+.score-art-tag .icon { flex-shrink: 0; }
+
+/* Body copy and secondary information remain legible on desktop as well. */
+.hero-description,.section-intro,.experience-feature p,.feature-tile p,
+.occasion-card > p:not(.occasion-label),.challenge-banner-copy > p:not(.eyebrow):not(.challenge-fine),
+.process-step p,.coverage-copy > p:not(.eyebrow),.faq-heading > p:last-child,.faq-answer p,
+.enquiry-intro > p:not(.eyebrow),.game-page-heading > p,.game-feedback,
+.game-result-card p:not(.eyebrow),.game-explainer p,.game-to-hire p,
+.legal-layout aside > p:not(.eyebrow),.legal-content p,
+.message-page > p:not(.eyebrow):not(.error-score),.brand-overview p,.brand-principles p {
+  font-size: .9375rem; line-height: 1.7;
+}
+.stage-caption,.score-caption,.occasion-bottom,.challenge-fine,.challenge-art-label,
+.coverage-response,.coverage-board .field-note,.quote-note p,.quote-note strong,
+.preview-notice,.legal-content .preview-notice,.form-hint,.field-note,.optional,.form-privacy,
+.enquiry-summary dl div,.enquiry-summary .micro,.form-result p,.price-guide small,
+.footer-links a,.footer-bottom p,.footer-bottom nav,.game-keyboard-note,
+.game-console-bottom > span,.game-console-bottom .text-link,.game-art-caption,
+.game-stage-bottom .micro,.game-stage-bottom > span:last-child,.game-footnote p,
+.reduced-game-instructions { font-size: .75rem; line-height: 1.65; }
+.button,.hero-actions .button,.hero-actions .text-link,.text-link,
+.occasion-card .text-link,.challenge-banner .button,.coverage-copy .text-link,
+.enquiry-contact a,.form-step label,.form-actions .button,.form-result .button,
+.game-main-button,.result-actions .button { font-size: .875rem; }
+.micro,.eyebrow,.hero .eyebrow,.hero-note,.feature-tile .micro,
+.occasion-card-top .micro,.coverage-board-header .micro,.form-top .micro,
+.console-top .micro,.console-score > .micro,.timing-labels .micro,
+.round-cell span,.meter-axis,.game-explainer .micro { font-size: 11px; line-height: 1.6; }
+.stage-top .micro,.game-stage-top .micro,.game-stage-top .micro:first-child,
+.floating-score .micro { font-size: 10px; line-height: 1.5; }
+.home-base { flex-wrap: wrap; }
+.home-base small { font-size: 11px; line-height: 1.6; }
+.form-step-label { font-size: 12px; white-space: nowrap; }
+.round-play { flex-shrink: 0; }
+.faq summary { font-size: 1rem; line-height: 1.5; }
+.game-stage-top .micro:first-child { max-width: none; }
+
+@media (max-width: 800px) {
+  .main-nav { position: absolute; top: 100%; max-height: calc(100dvh - 100px); overflow-y: auto; overscroll-behavior: contain; }
+  .main-nav a { white-space: normal; }
+  .menu-toggle,.motion-toggle { min-width: 44px; min-height: 44px; }
+  .header-inner { gap: 12px; }
+  .header-actions { gap: 8px; }
+  .text-link { min-height: 44px; }
+  .hero-actions { flex-wrap: wrap; }
+  .round-play { width: 32px; height: 32px; }
+  .town-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .town-grid button { font-size: 14px; line-height: 1.4; }
+  .game-layout { grid-template-columns: minmax(0,1fr); gap: 20px; }
+  .game-machine-stage { min-height: 0; }
+  .game-machine-stage .machine-svg { width: min(100%,420px); max-width: 100%; margin: 0 auto; }
+  .console-score strong { font-size: clamp(4.5rem,24vw,7rem); }
+  .game-rounds { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .result-actions { width: 100%; }
+  .result-actions .button { flex: 1 1 10rem; }
+  .game-explainer { grid-template-columns: minmax(0,1fr); }
+  .game-explainer p { max-width: 60ch; }
+}
+@media (max-width: 580px) {
+  .feature-tile { flex-direction: column; }
+  .hero-actions { align-items: stretch; }
+  .hero-actions .button { padding: 14px 18px; }
+  .challenge-banner h2 { font-size: clamp(2.5rem,12vw,4.2rem); }
+  .footer-top { grid-template-columns: minmax(0,1fr); }
+  .footer-top > p { text-align: left; }
+  .home-base small { flex-basis: 100%; margin-left: 0; }
+  .hero-stage { padding-top: 40px; }
+  .hit-prompt span:not(.tap-circle) { font-size: 10px; }
+  .brand-logo-panel img { max-width: min(100%,230px); }
+}
+@media (max-width: 360px) {
+  .town-grid { grid-template-columns: minmax(0,1fr); }
+  .hero-actions { flex-direction: column; }
+  .hero-actions .text-link { justify-content: center; }
+}
+@media (max-height: 500px) and (max-width: 800px) {
+  .site-header { position: relative; }
+  .main-nav { max-height: calc(100dvh - 105px); padding-block: 8px; }
+  .main-nav a { padding-block: 10px; }
+  .mobile-dock { display: none; }
+}
+
+/* Punch Rush status and the shared daily score. Hidden cards take no space. */
+.game-combo { margin-top: 20px; min-height: 1.6em; color: var(--red); text-align: center; font-weight: 700; overflow-wrap: break-word; }
+.game-combo + .game-feedback { margin-top: 8px; }
+.daily-score-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 16px; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #46303b; }
+.daily-score-card > .micro { color: #d5b6c2; }
+.daily-score-card > strong { grid-column: 2; grid-row: 1 / span 2; color: var(--red); font: 600 clamp(2rem,6vw,2.75rem)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.daily-score-card > [data-daily-score-status] { min-width: 0; font-size: 12px; line-height: 1.65; overflow-wrap: break-word; }
+
+/* Clear feedback during the short pause between linked hits. */
+.game-main-button[aria-disabled="true"] { opacity: .72; cursor: wait; }
+.round-cell[data-quality="perfect"],.round-cell[data-quality="sharp"] { border-color: var(--red); }
+
+@media (min-width: 801px) and (max-width: 1000px) {
+  .legal-layout { grid-template-columns: minmax(0,1fr); gap: 45px; }
+  .legal-layout aside { position: static; }
+  .legal-layout h1 { max-width: 650px; }
+}
+
+.hero .machine-svg { margin-left: 0; }
+
+@media (max-width: 580px) {
+  .form-actions { gap: 12px; }
+  .form-actions .button { min-width: 0; padding-inline: 16px; gap: 12px; }
+  .form-actions #submit-enquiry { flex: 1 1 11rem; }
+}
+
+.heading-stop { padding-inline-start: .075em; letter-spacing: 0; }
