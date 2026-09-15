@@ -1,0 +1,52 @@
+<svg class="machine-svg" data-machine-svg viewBox="0 0 560 650" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustrative Wycombe Punch cabinet">
+<style>.led-segment{fill:#40101c}.led-segment.lit{fill:#ff3653}.impact-rays{opacity:0}</style><defs>
+ <linearGradient id="static-face" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#323238"/><stop offset=".45" stop-color="#151519"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+ <linearGradient id="static-side"><stop stop-color="#840919"/><stop offset=".8" stop-color="#ed1635"/><stop offset="1" stop-color="#ff3c52"/></linearGradient>
+ <linearGradient id="static-bag" x1="0" y1=".3" x2="1" y2=".5"><stop stop-color="#720b18"/><stop offset=".27" stop-color="#e21830"/><stop offset=".54" stop-color="#ff344b"/><stop offset="1" stop-color="#a30b21"/></linearGradient>
+ <linearGradient id="static-metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#57575e"/><stop offset="1" stop-color="#17171c"/></linearGradient>
+ <radialGradient id="static-floor"><stop stop-color="#ee203d" stop-opacity=".2"/><stop offset=".7" stop-color="#ee203d" stop-opacity=".04"/><stop offset="1" stop-color="#ee203d" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="290" cy="591" rx="235" ry="55" fill="url(#static-floor)"/>
+<ellipse cx="290" cy="591" rx="177" ry="35" fill="none" stroke="#ff2848" stroke-opacity=".15"/>
+<ellipse cx="290" cy="593" rx="138" ry="18" fill="#050506" opacity=".7"/>
+<path d="m193 571 211-23 27 27-1 18-227 27-23-25Z" fill="#1d1d22" stroke="#4c4c54"/>
+<path d="m203 603 224-27 3 17-227 27Z" fill="#09090c"/>
+<path d="m225 199 169-21-10 392-171 21Z" fill="url(#static-face)" stroke="#53535c" stroke-width="1.6"/>
+<path d="m394 178 45-24-9 393-46 23Z" fill="url(#static-side)"/>
+<path d="m407 201 16-9-7 335-15 12Z" fill="#510818" opacity=".5"/>
+<path d="m414 436 7-4-2 76-7 5Z" fill="#ff7280" opacity=".65"/>
+<path d="m219 376-2 205M389 324l-9 239" stroke="#fa2443" stroke-width="4"/>
+<path d="m284 221 91-12-1 96-91 12Z" fill="#060608" stroke="#4b4b54"/>
+<text x="329" y="230" fill="#a0a0ac" font-size="6" font-family="Arial,sans-serif" letter-spacing="1.4" text-anchor="middle">YOUR SCORE</text>
+<g data-led-display transform="translate(298 237)"><g data-digit="0" transform="translate(0 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g><g data-digit="1" transform="translate(25 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g><g data-digit="2" transform="translate(50 0)"><path data-segment="a" class="led-segment lit" d="M3 0h10l2 2-2 2H3L1 2Z"/><path data-segment="b" class="led-segment lit" d="m16 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="c" class="led-segment lit" d="m16 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="d" class="led-segment lit" d="M3 32h10l2 2-2 2H3l-2-2Z"/><path data-segment="e" class="led-segment " d="m0 19 2 2v9l-2 2-2-2v-9Z"/><path data-segment="f" class="led-segment lit" d="m0 3 2 2v9l-2 2-2-2V5Z"/><path data-segment="g" class="led-segment lit" d="M3 16h10l2 2-2 2H3l-2-2Z"/></g></g>
+<text x="329" y="299" fill="#8f8f9c" font-size="5.4" font-family="Arial,sans-serif" letter-spacing="1" text-anchor="middle">A LITTLE FRIENDLY COMPETITION</text>
+<path d="m306 326 65-7v17l-65 7Z" fill="#111115" stroke="#4a4a53"/>
+<circle cx="319" cy="333" r="4" fill="#ff2848"/>
+<path d="m333 327 25-3v7l-25 3Z" fill="#030304" stroke="#44444e"/>
+<path d="m228 365 146-17-3 166-147 18Z" fill="#111114" stroke="#313138"/>
+<image href="logo-small.webp" x="245" y="376" width="106" height="106"/>
+<path d="m237 537 116-14m-116 20 116-14m-116 20 116-14" stroke="#42424b" stroke-width="2"/>
+<rect x="234" y="566" width="11" height="7" fill="#2c2c33" transform="rotate(-7 234 566)"/>
+<circle cx="243" cy="559" r="1.8" fill="#81818b"/>
+<path d="m143 89 48-26 204-21 48 29-57-4Z" fill="url(#static-metal)" stroke="#48484f"/>
+<path d="m386 67 57 24 11 75-48 23Z" fill="url(#static-side)"/>
+<path d="m143 89 243-22 20 122-245 27Z" fill="url(#static-face)" stroke="#68686f" stroke-width="2"/>
+<path d="m152 98 224-20 17 101-224 26Z" fill="#0c0c10" stroke="#fa2846" stroke-width="2.8"/>
+<path d="m164 110 67-6m87-8 46-4m-192 96 61-7m88-11 54-6" stroke="#ff2f49" stroke-width="5"/>
+<image href="logo-small.webp" x="234" y="86" width="82" height="82"/>
+<path d="m161 216 246-27-29 23-189 23Z" fill="#07070a" stroke="#38383e"/>
+<path d="m205 219 45-6v10l-43 6Z" fill="#ff2645" opacity=".25"/>
+<g class="bag-assembly">
+ <path d="m222 212 14-1v23l-14 2Z" fill="url(#static-metal)" stroke="#62626c"/>
+ <path d="m217 235 24-2 5 32-33 2Z" fill="#871125"/>
+ <path d="m215 255 29-2c3 27 22 43 22 66 0 32-19 47-39 47-23 0-41-17-39-45 1-24 21-44 27-66Z" fill="url(#static-bag)" stroke="#ff5469" stroke-opacity=".4"/>
+ <path d="m232 264c-2 30 18 53 11 78" fill="none" stroke="#ff8492" stroke-opacity=".55" stroke-width="1.8"/>
+ <path d="m213 280c-13 24-18 48-7 63" fill="none" stroke="#620819" stroke-width="3" opacity=".55"/>
+ <path d="m216 244 25-2m-26 8 28-2" stroke="#f75068" stroke-opacity=".5"/>
+ <path d="m236 322-7 8 5 6-9 11" fill="none" stroke="#ffd3d9" stroke-width="2" opacity=".7"/>
+</g>
+<g class="impact-rays" stroke="#ff405a" stroke-width="3" stroke-linecap="round">
+ <path d="m169 285-22-9m111 9 20-12m-70 98-8 21m-20-45-23 11m91-7 20 10m-27-99 6-15"/>
+</g>
+<text x="305" y="606" text-anchor="middle" fill="#777782" font-family="Arial,sans-serif" font-size="6" letter-spacing="3">WYCOMBE PUNCH / WP—01</text>
+</svg>

@@ -1,0 +1,1028 @@
+{
+  "passed": 204,
+  "failed": 0,
+  "total": 204,
+  "environment": "Chromium; local source rendered via inlining; browser URL navigation blocked by environment. Live hosting, real inbox delivery and device hardware not tested.",
+  "results": [
+    {
+      "name": "brand-kit.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "brand-kit.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "brand-kit.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "brand-kit.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "brand-kit.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "brand-kit.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "brand-kit.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "play.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "play.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "booking-information.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "booking-information.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "privacy.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "privacy.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "thank-you.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "thank-you.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "404.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "404.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: unique IDs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: one H1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: language/title/description",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: no media or tracking embeds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: internal targets exist",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "index.html: images have alt text",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "index.html: no party/nightlife promotion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Contrast: red button >= 4.5:1",
+      "passed": true,
+      "detail": "5.29"
+    },
+    {
+      "name": "Contrast: body copy >= 4.5:1",
+      "passed": true,
+      "detail": "7.44"
+    },
+    {
+      "name": "Contrast: red accent >= 4.5:1",
+      "passed": true,
+      "detail": "5.29"
+    },
+    {
+      "name": "Contrast: main text >= 4.5:1",
+      "passed": true,
+      "detail": "17.74"
+    },
+    {
+      "name": "index.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "index.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "index.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "index.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "index.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "index.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "index.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "index.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "index.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "index.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "index.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "index.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "index.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "play.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "play.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "play.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "play.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "play.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "play.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "play.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "play.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "play.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "play.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "play.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "play.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "play.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "privacy.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "privacy.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "privacy.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "privacy.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "privacy.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "privacy.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "privacy.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "privacy.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "privacy.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "privacy.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "privacy.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "privacy.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "privacy.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "booking-information.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "booking-information.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "booking-information.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "booking-information.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "booking-information.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "booking-information.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "booking-information.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "booking-information.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "booking-information.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "booking-information.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "booking-information.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "booking-information.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "booking-information.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "brand-kit.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "404.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "404.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "404.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "404.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "404.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "404.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "404.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "404.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "404.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "404.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "404.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "404.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "404.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "thank-you.html: no overflow at 320px",
+      "passed": true,
+      "detail": "scrollWidth=320"
+    },
+    {
+      "name": "thank-you.html: no overflow at 360px",
+      "passed": true,
+      "detail": "scrollWidth=360"
+    },
+    {
+      "name": "thank-you.html: no overflow at 390px",
+      "passed": true,
+      "detail": "scrollWidth=390"
+    },
+    {
+      "name": "thank-you.html: no overflow at 430px",
+      "passed": true,
+      "detail": "scrollWidth=430"
+    },
+    {
+      "name": "thank-you.html: no overflow at 580px",
+      "passed": true,
+      "detail": "scrollWidth=580"
+    },
+    {
+      "name": "thank-you.html: no overflow at 581px",
+      "passed": true,
+      "detail": "scrollWidth=581"
+    },
+    {
+      "name": "thank-you.html: no overflow at 768px",
+      "passed": true,
+      "detail": "scrollWidth=768"
+    },
+    {
+      "name": "thank-you.html: no overflow at 800px",
+      "passed": true,
+      "detail": "scrollWidth=800"
+    },
+    {
+      "name": "thank-you.html: no overflow at 801px",
+      "passed": true,
+      "detail": "scrollWidth=801"
+    },
+    {
+      "name": "thank-you.html: no overflow at 1024px",
+      "passed": true,
+      "detail": "scrollWidth=1024"
+    },
+    {
+      "name": "thank-you.html: no overflow at 1280px",
+      "passed": true,
+      "detail": "scrollWidth=1280"
+    },
+    {
+      "name": "thank-you.html: no overflow at 1440px",
+      "passed": true,
+      "detail": "scrollWidth=1440"
+    },
+    {
+      "name": "thank-you.html: no overflow at 1920px",
+      "passed": true,
+      "detail": "scrollWidth=1920"
+    },
+    {
+      "name": "Hero enabled by JS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Tap swings the hero bag",
+      "passed": true,
+      "detail": "matrix(-0.103951, -0.994582, 0.994582, -0.103951, 0, 0)"
+    },
+    {
+      "name": "Hero sample score ends at 847",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "LED matches the hero score",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Bag settles after hit",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Demo explicitly labelled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Motion toggle applies class",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Reduced-motion score is instant",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Reduced mode has no bag swing",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Marquee pauses under reduced motion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Coverage selection fills location",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Coverage button records active state",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Event card fills occasion",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Step 1 rejects no event",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Past event date is rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Date is genuinely optional",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Whitespace-only venue rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Builder reaches contact step",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Summary shows selected event",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Summary shows chosen location",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Invalid email prevents result",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Preview reports not sent",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Preview performs zero fetches",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Blocked clipboard has selectable fallback",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Copied draft contains the event",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Copied draft says not a booking",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "FAQ expands natively",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Mobile menu opens",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Background becomes inert",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape closes menu",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Focus returns to toggle",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Background no longer inert",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Game maths: edges and perfect scores",
+      "passed": true,
+      "detail": "[0, 999, 0, 0, 999, 0]"
+    },
+    {
+      "name": "Scores stay within 000\u2013999",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Game starts idle",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Start enters aiming state",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Timing cursor moves",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Stop records round one",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Exactly three rounds complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Final score is best round",
+      "passed": true,
+      "detail": "[526, 973, 936]"
+    },
+    {
+      "name": "Result panel becomes visible",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Session best matches actual scores",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Score-copy fallback works",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Reset clears all three rounds",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Reset preserves visit best",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Space starts round",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Enter stops round",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Motion toggle resets set safely",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Motion-free mode hides moving bar",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Motion-free instructions shown",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Motion-free mode has real timing score",
+      "passed": true,
+      "detail": "988"
+    },
+    {
+      "name": "Reduced game score is instant",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Device reduced-motion preference respected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Toggle does not override device request",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Unfinished round times out safely",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No-JS headline visible",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No-JS content is not reveal-hidden",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No-JS form remains disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No-JS mobile navigation accessible",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No JavaScript runtime errors",
+      "passed": true,
+      "detail": "[]"
+    }
+  ]
+}
