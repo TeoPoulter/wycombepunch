@@ -185,8 +185,12 @@ test('local preview submits nothing; storage-denied live success stays explicitl
 });
 test('calendar rejects past days, supports unknown dates and clears a previous selection',()=>{
   const f=fixture();const days=f.$('#calendar-days');assert.equal(days.querySelector('[data-date="2026-09-14"]').disabled,true);
+  assert.equal(f.$('#date-undecided').textContent,'Not decided yet');
   days.querySelector('[data-date="2026-09-20"]').click();assert.equal(f.$('#event-date').value,'2026-09-20');assert.equal(f.$('#event-date').dataset.chosen,'true');
+  assert.equal(f.$('#date-undecided').textContent,'Clear date — decide later');assert.equal(f.$('#date-undecided').getAttribute('aria-pressed'),'false');assert.equal(f.$('#date-selection').textContent,'Selected: 20 September 2026');
+  f.go(2);f.go(1);assert.equal(f.$('#date-undecided').textContent,'Clear date — decide later');
   f.$('#date-undecided').click();assert.equal(f.$('#event-date').value,'');assert.equal(f.$('#date-undecided').getAttribute('aria-pressed'),'true');assert.equal(days.querySelector('[aria-pressed="true"]'),null);
+  assert.equal(f.$('#date-undecided').textContent,'Not decided yet');assert.equal(f.$('#date-selection').textContent,'Date to be confirmed — no problem.');
 });
 test('calendar keyboard navigation crosses month boundaries and clamps to today without choosing a date',()=>{
   const f=fixture();const days=f.$('#calendar-days');const sep30=days.querySelector('[data-date="2026-09-30"]');sep30.focus();assert.equal(f.key(sep30,'ArrowRight'),true);
@@ -215,18 +219,24 @@ test('honeypot content blocks submissions without creating a success receipt',as
 });
 test('calendar PageDown handles short months, and reset clears its chosen date and radio state',async()=>{
   const f=fixture();f.$('[data-calendar-next]').click();const oct31=f.$('#calendar-days').querySelector('[data-date="2026-10-31"]');oct31.focus();f.key(oct31,'PageDown');assert.equal(f.document.activeElement.dataset.date,'2026-11-30');
-  f.document.activeElement.click();f.choose('duration','Full day');f.form.reset();await Promise.resolve();assert.equal(f.$('#event-date').value,'');assert.equal(f.$('#event-date').dataset.chosen,'');assert.match(f.$('#calendar-month').textContent,/September 2026/);assert.equal(f.$('#date-selection').textContent,'');assert.ok(f.$$('[data-choice]').every(b=>b.getAttribute('aria-checked')==='false'));
+  f.document.activeElement.click();f.choose('duration','Full day');f.form.reset();await Promise.resolve();assert.equal(f.$('#event-date').value,'');assert.equal(f.$('#event-date').dataset.chosen,'');assert.match(f.$('#calendar-month').textContent,/September 2026/);assert.equal(f.$('#date-selection').textContent,'');assert.equal(f.$('#date-undecided').textContent,'Not decided yet');assert.ok(f.$$('[data-choice]').every(b=>b.getAttribute('aria-checked')==='false'));
 });
 
-test('committed choices show brief feedback, advance once, and prevent rapid double navigation in both motion modes',()=>{
+test('committed choices leave time to see the answer, then advance smoothly once in both motion modes',()=>{
   for(const reduced of [true,false]) {
     const f=fixture({reduced});f.$('#date-undecided').click(); // Pre-existing answer on the next question.
     f.choose('event-type','Family gathering');f.choose('event-type','Family gathering');
-    f.tick(reduced?139:279);assert.equal(f.step(),0);
+    f.tick(reduced?139:639);assert.equal(f.step(),0);
     f.tick(1);assert.equal(f.form.dataset.transitioning,'true');
     f.$('#form-next').click();f.$('#form-next').click();
-    f.tick(500);assert.equal(f.step(),1);assert.equal(f.form.dataset.transitioning,'false');
-    f.$('#form-next').click();f.$('#form-next').click();f.tick(500);assert.equal(f.step(),2);
+    if (!reduced) {
+      f.tick(319);assert.equal(f.step(),0);
+      f.tick(1);assert.equal(f.step(),1);assert.equal(f.form.dataset.transitioning,'true');
+      f.tick(599);assert.equal(f.form.dataset.transitioning,'true');
+      f.tick(1);
+    } else f.tick(180);
+    assert.equal(f.step(),1);assert.equal(f.form.dataset.transitioning,'false');
+    f.$('#form-next').click();f.$('#form-next').click();f.tick(1000);assert.equal(f.step(),2);
   }
 });
 test('arrow-key choice browsing does not advance until explicitly committed',()=>{
@@ -250,7 +260,7 @@ test('changes and Back cancel stale choice timers, and forced navigation cancels
   const f=fixture({reduced:false});f.choose('event-type','Family gathering');f.tick(100);
   f.set('event-type','Eid celebration');f.tick(1000);assert.equal(f.step(),0);
   f.go(1);f.$('#date-undecided').click();f.$('#form-back').click();f.tick(1000);assert.equal(f.step(),0);
-  f.choose('event-type','Family gathering');f.tick(300);assert.equal(f.form.dataset.transitioning,'true');
+  f.choose('event-type','Family gathering');f.tick(640);assert.equal(f.form.dataset.transitioning,'true');
   f.go(5);f.tick(1000);assert.equal(f.step(),5);assert.equal(f.form.dataset.transitioning,'false');assert.equal(f.$('#question-stage').inert,false);assert.equal(f.$('#question-stage').style.height,'');
 });
 test('Enter validates plain answers, held Enter cannot skip questions after a transition, and notes preserve Shift+Enter',()=>{

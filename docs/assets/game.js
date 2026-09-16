@@ -21,8 +21,99 @@
   let startedAt = 0;
   let frame = 0;
   let runId = '';
+  let celebrationFrame = 0;
+  let celebrationCanvas = null;
+  const perfectBadge = document.createElement('p');
+  perfectBadge.className = 'hit-perfect-badge';
+  perfectBadge.textContent = 'Perfect hit';
+  // The existing live feedback announces the result; this is visual emphasis.
+  perfectBadge.setAttribute('aria-hidden', 'true');
+  perfectBadge.hidden = true;
+  feedback.before(perfectBadge);
   const mode = () => WP.reducedMotion ? 'motion-free' : 'precision';
   const clamp = value => Math.max(0, Math.min(1, value));
+
+  function stopCelebration(clearResult = false) {
+    cancelAnimationFrame(celebrationFrame);
+    celebrationFrame = 0;
+    celebrationCanvas?.remove();
+    celebrationCanvas = null;
+    if (clearResult) {
+      delete arena.dataset.perfect;
+      perfectBadge.hidden = true;
+    }
+  }
+  function celebratePerfect() {
+    stopCelebration();
+    arena.dataset.perfect = 'true';
+    perfectBadge.hidden = false;
+    if (WP.reducedMotion || document.hidden) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'hit-confetti';
+    canvas.setAttribute('aria-hidden', 'true');
+    const context = canvas.getContext('2d');
+    // The winning treatment remains if a browser cannot create a canvas.
+    if (!context) return;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const scale = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    context.setTransform(scale, 0, 0, scale, 0, 0);
+    document.body.append(canvas);
+    celebrationCanvas = canvas;
+
+    const colours = ['#ff2848', '#f5f3ef', '#e2bc70'];
+    const started = performance.now();
+    const particleCount = width < 600 ? 170 : 250;
+    const particles = Array.from({ length: particleCount }, (_, i) => {
+      const fromLeft = i % 2 === 0;
+      // Two broad corner bursts, followed by a smaller second volley. Random
+      // variation is decorative only and never contributes to a game score.
+      return {
+        x: fromLeft ? width * .08 : width * .92,
+        y: height * .82,
+        vx: (fromLeft ? 1 : -1) * (width * .12 + Math.random() * width * .34),
+        vy: -(height * .7 + Math.random() * height * .55),
+        delay: i >= particleCount * .7 ? .32 + Math.random() * .2 : Math.random() * .18,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - .5) * 9,
+        size: 5 + Math.random() * 5,
+        colour: colours[i % colours.length],
+        ribbon: i % 6 === 0
+      };
+    });
+    function draw(now) {
+      if (WP.reducedMotion || document.hidden || celebrationCanvas !== canvas) {
+        stopCelebration();
+        return;
+      }
+      const elapsed = (now - started) / 1000;
+      // One finite celebration. No loops, flashing, input blocking or timers
+      // left behind after replay/navigation.
+      if (elapsed >= 4.8) { stopCelebration(); return; }
+      context.clearRect(0, 0, width, height);
+      for (const particle of particles) {
+        const age = elapsed - particle.delay;
+        if (age < 0) continue;
+        const drag = (1 - Math.exp(-age * .65)) / .65;
+        const x = particle.x + particle.vx * drag + Math.sin(age * 3 + particle.angle) * 12;
+        const y = particle.y + particle.vy * age + height * .27 * age * age;
+        if (y > height + 30) continue;
+        context.save();
+        context.globalAlpha = Math.min(1, (4.8 - elapsed) / .8);
+        context.translate(x, y);
+        context.rotate(particle.angle + particle.spin * age);
+        context.scale(1, .3 + Math.abs(Math.cos(age * 6 + particle.angle)) * .7);
+        context.fillStyle = particle.colour;
+        context.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size * (particle.ribbon ? 2.7 : .65));
+        context.restore();
+      }
+      celebrationFrame = requestAnimationFrame(draw);
+    }
+    celebrationFrame = requestAnimationFrame(draw);
+  }
 
   function scoreForPosition(position) {
     if (!Number.isFinite(position)) return 0;
@@ -60,6 +151,7 @@
   }
   function reset(message) {
     stopClock();
+    stopCelebration(true);
     setState('idle');
     runId = '';
     marker.style.left = '0%';
@@ -70,6 +162,7 @@
     showMode();
   }
   function interrupt() {
+    stopCelebration();
     if (state !== 'aiming') return;
     reset('Ready when you are. Tap Start for a fresh attempt.');
   }
@@ -86,6 +179,7 @@
   function startAttempt() {
     if (document.hidden) return;
     stopClock();
+    stopCelebration(true);
     runId = window.crypto?.randomUUID?.() || `hit-${Date.now()}-${performance.now()}`;
     startedAt = performance.now();
     setState('aiming');
@@ -117,6 +211,7 @@
       : score >= 800 ? 'Nearly there. Try again.'
       : 'Try again. You can do better.';
     feedback.textContent = `${reaction}${score > previousBest && previousBest > 0 ? ' New best this visit.' : ''}`;
+    if (score === 999) celebratePerfect();
     document.dispatchEvent(new CustomEvent('wp:game-complete', { detail: Object.freeze({
       runId, score, mode: mode(), version: gameVersion
     }) }));
@@ -161,6 +256,7 @@
   document.addEventListener('wp:motion', () => reset('Ready. The timing mode has changed.'));
   window.addEventListener('blur', interrupt);
   window.addEventListener('pagehide', interrupt);
+  window.addEventListener('resize', () => stopCelebration());
   reset();
   button.disabled = false;
 })();

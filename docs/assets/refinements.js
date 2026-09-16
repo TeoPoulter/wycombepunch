@@ -65,12 +65,17 @@
     title.textContent = button.dataset.town;
     const detail = document.createElement('span');
     detail.textContent = 'Selected for your enquiry';
+    response.getAnimations?.({ subtree: true }).forEach(animation => animation.cancel());
     response.replaceChildren(title, detail);
+    response.classList.remove('is-selected');
+    void response.offsetWidth;
     response.classList.add('is-selected');
     if (!motionOff()) {
-      response.getAnimations?.().forEach(animation => animation.cancel());
-      animate(response, [{ opacity: .25, transform: 'translateY(7px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 300, easing: 'cubic-bezier(.2,.8,.2,1)' });
-      animate(button, [{ transform: 'scale(.98)' }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' });
+      const ease = 'cubic-bezier(.22,1,.36,1)';
+      animate(response, [{ opacity: 0, transform: 'translateY(16px) scale(.985)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 760, easing: ease });
+      animate(title, [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 520, delay: 100, easing: ease, fill: 'both' });
+      animate(detail, [{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 540, delay: 200, easing: ease, fill: 'both' });
+      animate(button, [{ transform: 'scale(.97)' }, { transform: 'scale(1.015)', offset: .45 }, { transform: 'scale(1)' }], { duration: 540, easing: ease });
     }
   }));
   document.addEventListener('wp:motion', () => {

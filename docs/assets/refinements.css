@@ -8,7 +8,7 @@
 .score-art-tag[data-game-link]:hover .icon { transform: translate(2px,-2px); }
 .game-transition-veil { position: fixed; inset: 0; z-index: 10000; background: #0b0b0e; opacity: 0; pointer-events: none; }
 .coverage-response.is-selected { position: relative; display: grid; gap: 2px; padding: 13px 15px 13px 51px; border: 1px solid #ff284855; border-radius: 10px; background: #ff28480d; min-height: 64px; }
-.coverage-response.is-selected::before { content: "✓"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--red); color: var(--ink); font: 700 17px/1 var(--body); }
+.coverage-response.is-selected::before { content: "✓"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--red); color: var(--ink); font: 700 17px/1 var(--body); animation: town-confirm-check .65s .14s cubic-bezier(.22,1,.36,1) both; }
 .coverage-response.is-selected strong { color: var(--white); font-size: 14px; line-height: 1.4; }
 .coverage-response.is-selected span { font-size: 12px; line-height: 1.5; }
 @media (max-width: 580px) { .experience-heading .section-intro { margin-top: 17px; } }
@@ -36,3 +36,7 @@ button.home-base:focus-visible { outline: 3px solid var(--red); outline-offset: 
 .motion-reduced .instagram-nudge-arrow path { stroke-dashoffset: 0 !important; animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .instagram-nudge-arrow path { stroke-dashoffset: 0 !important; animation: none !important; } }
 @media (max-width: 580px) { .instagram-nudge { max-width: calc(100% - 5px); font-size: 17px; } }
+
+@keyframes town-confirm-check { from { opacity:0; transform:translateY(-50%) scale(.35) rotate(-25deg); } 65% { opacity:1; transform:translateY(-50%) scale(1.12) rotate(4deg); } to { opacity:1; transform:translateY(-50%) scale(1) rotate(0); } }
+.motion-reduced .coverage-response.is-selected::before { animation:none; }
+@media(prefers-reduced-motion:reduce) { .coverage-response.is-selected::before { animation:none; } }

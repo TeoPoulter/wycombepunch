@@ -9,11 +9,14 @@ const source = readFileSync(new URL('../docs/assets/game.js', import.meta.url), 
 class Element {
   constructor(tagName = 'DIV') {
     this.tagName = tagName; this.textContent = ''; this.hidden = false; this.style = {};
-    this.dataset = {}; this.attrs = {}; this.listeners = {}; this.parentNode = null;
+    this.dataset = {}; this.attrs = {}; this.listeners = {}; this.parentNode = null; this.children = [];
     this.bounds = { width: 220, height: 180, top: 300, bottom: 480, left: 40, right: 260 };
   }
   setAttribute(name, value) { this.attrs[name] = value; }
   getAttribute(name) { return this.attrs[name] ?? null; }
+  append(node) { node.parentNode = this; this.children.push(node); }
+  before(node) { node.parentNode = this.parentNode; this.parentNode.children.splice(Math.max(0, this.parentNode.children.indexOf(this)), 0, node); }
+  remove() { if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this); this.parentNode = null; }
   addEventListener(type, callback) { (this.listeners[type] ||= []).push(callback); }
   dispatchEvent(event) {
     event.target ||= this;
@@ -38,7 +41,7 @@ class Element {
     return null;
   }
 }
-function fixture(reduced = false) {
+function fixture(reduced = false, canvasAvailable = true) {
   const nodes = new Map();
   const $ = selector => {
     if (!nodes.has(selector)) {
@@ -65,6 +68,14 @@ function fixture(reduced = false) {
   document.documentElement = Object.assign(new Element('HTML'), { parentNode: document, ownerDocument: document });
   document.body = Object.assign(new Element('BODY'), { parentNode: document.documentElement, ownerDocument: document });
   document.activeElement = document.body;
+  const canvasDraws = [];
+  document.createElement = tag => {
+    const node = Object.assign(new Element(tag.toUpperCase()), { ownerDocument: document });
+    if (tag === 'canvas') node.getContext = () => canvasAvailable ? Object.fromEntries(
+      ['setTransform', 'clearRect', 'save', 'translate', 'rotate', 'scale', 'fillRect', 'restore'].map(method => [method, (...args) => { if (method === 'fillRect') canvasDraws.push(args); }])
+    ) : null;
+    return node;
+  };
   const window = Object.assign(new Element('WINDOW'), { innerWidth: 800, innerHeight: 900 });
   window.WP = { $, reducedMotion: reduced };
   const events = [];
@@ -84,7 +95,10 @@ function fixture(reduced = false) {
     return event.defaultPrevented;
   }
   return {
-    $, document, window, events, advance, keyAt,
+    $, document, window, events, advance, keyAt, canvasDraws,
+    confetti: () => document.body.children.find(node => node.className === 'hit-confetti'),
+    perfectBadge: () => $('#game-arena').children.find(node => node.className === 'hit-perfect-badge'),
+    pendingFrames: () => scheduled.size,
     element: (tagName, attrs = {}, parent = $('#game-arena')) => Object.assign(new Element(tagName), { attrs, ownerDocument: document, parentNode: parent }),
     hit: () => $('#game-button').click(),
     state: () => $('#game-arena').dataset.state,
@@ -123,6 +137,75 @@ test('replay starts immediately and a lower result preserves the best this visit
   assert.ok(game.events[1].score > 0 && game.events[1].score < 999);
   assert.equal(game.$('#session-best').textContent, '999');
   assert.notEqual(game.events[0].runId, game.events[1].runId);
+});
+
+test('an exact 999 creates a finite decorative celebration; 998 does not', () => {
+  const game = fixture();
+  game.hit(); game.advance(461.25); game.hit();
+  assert.equal(game.events[0].score, 998);
+  assert.equal(game.confetti(), undefined);
+  assert.equal(game.perfectBadge().hidden, true);
+  assert.equal(game.$('#game-arena').dataset.perfect, undefined);
+  game.hit(); game.advance(450); game.hit();
+  assert.equal(game.events[1].score, 999);
+  assert.equal(game.confetti().getAttribute('aria-hidden'), 'true');
+  assert.equal(game.$('#game-arena').dataset.perfect, 'true');
+  assert.equal(game.perfectBadge().hidden, false);
+  game.advance(600);
+  assert.ok(game.canvasDraws.length > 0);
+  game.advance(4300);
+  assert.equal(game.confetti(), undefined);
+  assert.equal(game.pendingFrames(), 0);
+  assert.equal(game.perfectBadge().hidden, false, 'the result stays after the confetti finishes');
+  assert.equal(game.events.length, 2, 'decorative randomness must not post scores');
+});
+
+test('replay removes the previous celebration and another perfect hit celebrates again', () => {
+  const game = fixture();
+  game.hit(); game.advance(450); game.hit();
+  const firstCanvas = game.confetti();
+  game.advance(120);
+  game.hit();
+  assert.equal(firstCanvas.parentNode, null);
+  assert.equal(game.confetti(), undefined);
+  assert.equal(game.perfectBadge().hidden, true);
+  assert.equal(game.$('#game-arena').dataset.perfect, undefined);
+  game.advance(450); game.hit();
+  assert.ok(game.confetti());
+  assert.notEqual(game.confetti(), firstCanvas);
+  assert.equal(game.events.length, 2);
+});
+
+test('reduced-motion and unavailable canvas retain a static perfect result', () => {
+  for (const reduced of [false, true]) {
+    const game = fixture(reduced, false);
+    game.hit(); game.advance(reduced ? 1000 : 450); game.hit();
+    assert.equal(game.$('#game-score').textContent, '999');
+    assert.equal(game.$('#game-arena').dataset.perfect, 'true');
+    assert.equal(game.perfectBadge().hidden, false);
+    assert.equal(game.confetti(), undefined);
+    assert.equal(game.pendingFrames(), 0);
+  }
+  const reducedGame = fixture(true);
+  reducedGame.hit(); reducedGame.advance(1000); reducedGame.hit();
+  assert.equal(reducedGame.confetti(), undefined);
+  assert.equal(reducedGame.pendingFrames(), 0);
+});
+
+test('leaving the page or changing motion preference cleans up active confetti', () => {
+  for (const interruption of ['hide', 'blur', 'pagehide', 'resize', 'motion']) {
+    const game = fixture();
+    game.hit(); game.advance(450); game.hit();
+    assert.ok(game.confetti());
+    if (interruption === 'hide') game.hide();
+    else if (interruption === 'motion') {
+      game.window.WP.reducedMotion = true;
+      game.document.dispatchEvent({ type: 'wp:motion' });
+    } else game.window.dispatchEvent({ type: interruption });
+    assert.equal(game.confetti(), undefined, interruption);
+    assert.equal(game.pendingFrames(), 0, interruption);
+    assert.equal(game.events.length, 1);
+  }
 });
 
 test('motion-free mode scores a one-second attempt without displaying a moving meter', () => {

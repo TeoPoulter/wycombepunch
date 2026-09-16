@@ -7,6 +7,13 @@
 .hit-score-label { display: block; color: #adaab4; font-size: .75rem; line-height: 1.5; }
 .hit-score { display: block; margin-top: 4px; color: var(--white); font-family: var(--display); font-size: clamp(4rem, 24vw, 7rem); line-height: 1; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .hit-game[data-state="complete"] .hit-score { color: var(--red); }
+.hit-game[data-perfect="true"] { border-color: #e2bc70; background: radial-gradient(ellipse at 50% 0, #39222a, #131317 75%); box-shadow: 0 0 0 1px #e2bc7029, 0 18px 80px #ff284815; }
+.hit-game[data-perfect="true"] .hit-score { color: #f5f3ef; text-shadow: 0 0 28px #ff28486b; animation: hit-perfect-score .65s cubic-bezier(.16, 1, .3, 1) both; }
+.hit-perfect-badge { display: table; margin: 14px auto 0; padding: 7px 16px; border: 1px solid #e2bc7070; border-radius: 100px; background: #e2bc7010; color: #e2bc70; font-family: var(--mono); font-size: .8125rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; animation: hit-perfect-badge .55s .12s ease-out both; }
+.hit-perfect-badge[hidden] { display: none; }
+.hit-confetti { position: fixed; inset: 0; z-index: 110; width: 100%; height: 100%; pointer-events: none; }
+@keyframes hit-perfect-score { from { transform: scale(.88); } to { transform: scale(1); } }
+@keyframes hit-perfect-badge { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .hit-meter { position: relative; height: 30px; margin: 25px 5px 10px; border: 1px solid #4a4249; border-radius: 6px; background: #252127; }
 .hit-meter-target { position: absolute; inset: 0 auto 0 48.8%; width: 2.4%; background: var(--red); }
 .hit-meter-target::before { content: ''; position: absolute; top: -8px; left: 50%; width: 0; height: 0; border: 5px solid transparent; border-top-color: var(--red); transform: translateX(-50%); }
@@ -33,8 +40,14 @@
 .hit-hire-link { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; max-width: 700px; margin: 40px auto 56px; padding-top: 28px; border-top: 1px solid var(--line); }
 .hit-hire-link p { font-size: 1rem; color: var(--white); }
 .hit-hire-link .button { min-height: 48px; font-size: .875rem; }
-.motion-reduced .hit-game .hit-button svg { animation: none; }
-@media (prefers-reduced-motion: reduce) { .hit-game .hit-button svg { animation: none; } }
+.motion-reduced .hit-game .hit-button svg,
+.motion-reduced .hit-game .hit-score,
+.motion-reduced .hit-perfect-badge { animation: none; }
+.motion-reduced .hit-confetti { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hit-game .hit-button svg, .hit-game .hit-score, .hit-perfect-badge { animation: none; }
+  .hit-confetti { display: none; }
+}
 @media (max-width: 580px) {
   .hit-game-heading { padding-block: 26px 20px; }
   .hit-game-heading p { font-size: .9375rem; }

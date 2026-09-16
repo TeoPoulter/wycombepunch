@@ -6,6 +6,8 @@
 .watch-copy h2 { margin-bottom: 1.75rem; font-size: clamp(4.2rem, 8.6vw, 8.4rem); line-height: .94; }
 .watch-copy p:not(.eyebrow) { max-width: 28rem; color: var(--muted, #b5b5bf); font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.7; }
 .watch-copy .watch-aside { margin-top: 1.7rem; padding-left: 1rem; border-left: 2px solid var(--red, #ff2349); color: var(--white, #f7f6f2); }
+.watch-copy [data-video-punchline] { opacity: 0; visibility: hidden; transform: translateY(14px); transition: opacity .55s ease, transform .7s cubic-bezier(.22,1,.36,1), visibility 0s .55s; }
+.watch-copy [data-video-punchline].is-revealed { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
 .punch-video { inline-size: min(100%, 22rem); margin-inline: auto; border: 1px solid var(--line, #393940); border-radius: 16px; overflow: hidden; background: #101014; box-shadow: 0 16px 60px #0003; }
 .punch-video video { display: block; inline-size: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: contain; background: #08080a; }
 .punch-video[data-enhanced] video { cursor: pointer; }
@@ -38,7 +40,9 @@
   .punch-video.is-expanded video { max-height: calc(100dvh - 150px); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .watch-copy [data-video-punchline] { transition: none; transform: none; }
   .punch-video-overlay, .punch-video-overlay-stage, .punch-video-buttons button, .punch-video-close { transition: none; }
   .punch-video-overlay-stage { transform: none; }
 }
 html.motion-reduced .punch-video-overlay, html.motion-reduced .punch-video-overlay-stage { transition: none; transform: none; }
+html.motion-reduced .watch-copy [data-video-punchline] { transition: none; transform: none; }

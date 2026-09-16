@@ -91,7 +91,9 @@
       days.classList.add('month-enter');
     }
     undecided.setAttribute('aria-pressed', String(date.dataset.chosen === 'true' && !date.value));
-    selection.textContent = date.value ? new Date(`${date.value}T12:00:00`).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : date.dataset.chosen === 'true' ? 'Date to be confirmed — no problem.' : '';
+    // This is an alternative action, not a status saying the selected date is unknown.
+    undecided.textContent = date.value ? 'Clear date — decide later' : 'Not decided yet';
+    selection.textContent = date.value ? 'Selected: ' + new Date(`${date.value}T12:00:00`).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : date.dataset.chosen === 'true' ? 'Date to be confirmed — no problem.' : '';
   }
   previous.addEventListener('click', () => { if (blocked()) return; month.setMonth(month.getMonth()-1); renderCalendar(); });
   next.addEventListener('click', () => { if (blocked()) return; month.setMonth(month.getMonth()+1); renderCalendar(); });

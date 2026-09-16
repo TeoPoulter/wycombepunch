@@ -9,6 +9,7 @@
     const seek = player.querySelector('[data-video-seek]');
     const fullscreen = player.querySelector('[data-video-fullscreen]');
     const status = player.querySelector('[data-video-status]');
+    const punchline = player.closest('.watch-layout')?.querySelector('[data-video-punchline]');
     if (!video || !controls || !play || !mute || !seek || !fullscreen || !status) return;
 
     const icons = {
@@ -79,6 +80,11 @@
       seek.value = String(Math.min(video.currentTime || 0, duration()));
       seek.setAttribute('aria-valuetext', `${formatTime(video.currentTime || 0)} of ${formatTime(duration())}`);
       player.dataset.playing = String(!paused);
+      if (punchline) {
+        const ready = video.currentTime >= 15;
+        punchline.classList.toggle('is-revealed', ready);
+        punchline.setAttribute('aria-hidden', String(!ready));
+      }
     }
 
     function pauseAutomatically() {
@@ -279,7 +285,7 @@
       if (duration()) video.currentTime = Number(seek.value);
       update();
     });
-    ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'volumechange', 'seeked'].forEach(name => video.addEventListener(name, update));
+    ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'volumechange', 'seeked', 'emptied'].forEach(name => video.addEventListener(name, update));
     video.addEventListener('pause', () => {
       if (!internalPause && !video.ended) userPaused = true;
       internalPause = false;

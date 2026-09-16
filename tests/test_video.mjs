@@ -20,7 +20,7 @@ class Element extends EventTarget {
   constructor(tag = 'div', document) {
     super(); this.tagName = tag.toUpperCase(); this.document = document;
     const classes = new Set();
-    this.classList = { add: (...items) => items.forEach(item => classes.add(item)), remove: (...items) => items.forEach(item => classes.delete(item)), contains: item => classes.has(item) };
+    this.classList = { add: (...items) => items.forEach(item => classes.add(item)), remove: (...items) => items.forEach(item => classes.delete(item)), contains: item => classes.has(item), toggle: (item, force) => { if (force ?? !classes.has(item)) classes.add(item); else classes.delete(item); } };
   }
   setAttribute(name, value) { this.attributes[name] = value; }
   getBoundingClientRect() { return this.box; }
@@ -83,6 +83,8 @@ function setup({ reducedMotion = false, saveData = false, deferPlay = false, man
   video.pause = function () { if (!this.paused) { this.paused = true; this.dispatchEvent(new Event('pause')); } };
   const parts = { controls: create('div'), play: create('button'), mute: create('button'), seek: create('input'), fullscreen: create('button'), status: create('p') };
   const player = create('div');
+  const punchline = create('p');
+  player.closest = () => ({ querySelector: () => punchline });
   player.getBoundingClientRect = () => player.classList.contains('is-expanded')
     ? { left: 400, top: 20, bottom: 888, height: 868, width: 490 } : player.box;
   parts.controls.append(parts.seek, parts.play, parts.mute, parts.fullscreen);
@@ -98,7 +100,7 @@ function setup({ reducedMotion = false, saveData = false, deferPlay = false, man
   vm.runInNewContext(code, { document, window, navigator: { connection }, IntersectionObserver,
     getComputedStyle: () => ({ backgroundColor: 'rgba(5, 5, 8, 0.93)', backdropFilter: 'blur(14px)' }) });
   const overlay = document.body.children.at(-1);
-  return { video, parts, player, document, motion, connection, main, alreadyInert, overlay, close: overlay.children[0],
+  return { video, parts, player, punchline, document, motion, connection, main, alreadyInert, overlay, close: overlay.children[0],
     view: yes => observer([{ isIntersecting: yes, intersectionRatio: yes ? 0.8 : 0 }]),
     resolvePlay: () => resolvePlay?.() };
 }
@@ -165,6 +167,24 @@ test('unmute restarts at the beginning and plays audibly; muting never rewinds',
   assert.equal(s.video.muted, true);
   assert.equal(s.video.currentTime, 12);
   assert.equal(s.video.playCount, 1);
+});
+
+test('T-Rex line follows the 15-second media position, including seeking and audible restart', async () => {
+  const s = setup();
+  assert.equal(s.punchline.attributes['aria-hidden'], 'true');
+  s.video.currentTime = 14.99; s.video.dispatchEvent(new Event('timeupdate'));
+  assert.equal(s.punchline.classList.contains('is-revealed'), false);
+  s.video.currentTime = 15; s.video.dispatchEvent(new Event('timeupdate'));
+  assert.equal(s.punchline.classList.contains('is-revealed'), true);
+  assert.equal(s.punchline.attributes['aria-hidden'], 'false');
+  s.video.currentTime = 5; s.video.dispatchEvent(new Event('seeked'));
+  assert.equal(s.punchline.classList.contains('is-revealed'), false);
+  s.parts.seek.value = '24'; s.parts.seek.dispatchEvent(new Event('input'));
+  assert.equal(s.punchline.classList.contains('is-revealed'), true);
+  s.parts.mute.click(); await settled();
+  assert.equal(s.video.currentTime, 0);
+  assert.equal(s.punchline.classList.contains('is-revealed'), false);
+  assert.equal(s.punchline.attributes['aria-hidden'], 'true');
 });
 
 test('scroll and visibility resumes retain chosen sound and playback position', async () => {

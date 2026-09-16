@@ -6,12 +6,12 @@
 .form-step h3 { font-size:clamp(30px,3vw,43px); line-height:1.12; letter-spacing:-.04em; max-width:17ch; }
 .form-step .form-hint { font-size:14px; line-height:1.65; margin:12px 0 28px; max-width:42ch; }
 .answer-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.answer-choice { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; min-height:64px; text-align:left; padding:15px; background:#101015; border:1px solid #40404a; border-radius:11px; font-size:14px; font-weight:600; line-height:1.4; transition:border-color .2s,background .2s,transform .2s; }
+.answer-choice { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; min-height:64px; text-align:left; padding:15px; background:#101015; border:1px solid #40404a; border-radius:11px; font-size:14px; font-weight:600; line-height:1.4; transition:border-color .35s,background .35s,transform .35s var(--ease); }
 .answer-choice > span:first-child { overflow-wrap:anywhere; }
 .answer-choice:hover { border-color:#89818a; transform:translateY(-2px); }
 .answer-choice[aria-checked=true] { border-color:var(--red); background:#ff284812; }
 .choice-check { display:grid; place-items:center; flex:0 0 21px; width:21px; height:21px; border:1px solid #555560; border-radius:50%; }
-.choice-check svg { width:15px; height:15px; opacity:0; transform:scale(.6); transition:opacity .2s,transform .2s; }
+.choice-check svg { width:15px; height:15px; opacity:0; transform:scale(.6); transition:opacity .35s,transform .4s var(--ease); }
 .answer-choice[aria-checked=true] .choice-check { background:var(--red); border-color:var(--red); color:#0b0b0e; }
 .answer-choice[aria-checked=true] .choice-check svg { opacity:1; transform:none; }
 [data-choice-group=duration] { grid-template-columns:1fr; }
@@ -52,11 +52,11 @@
 .motion-reduced .form-step { animation:none; }
 .motion-reduced .answer-choice { transition:none; transform:none; }
 @media(prefers-reduced-motion:reduce) { .form-step { animation:none; } .answer-choice,.choice-check svg,.calendar-days button { transition:none; } .answer-choice:hover { transform:none; } }
-/* Committed answers move through a short exit, height change, then entrance. */
-.question-stage { position:relative; transition:height .26s var(--ease); }
-.form-step { animation:none; opacity:1; transform:none; transition:opacity .15s ease,transform .22s var(--ease); }
-.form-step.is-leaving { opacity:0; transform:translateY(-10px); }
-.form-step.is-entering { opacity:0; transform:translateY(12px); }
+/* The answer remains visible before a calm exit and a longer eased entrance. */
+.question-stage { position:relative; transition:height .56s cubic-bezier(.22,1,.36,1); }
+.form-step { animation:none; opacity:1; transform:none; transition:opacity .56s ease,transform .56s cubic-bezier(.22,1,.36,1); }
+.form-step.is-leaving { opacity:0; transform:translateY(-14px); transition-duration:.32s; }
+.form-step.is-entering { opacity:0; transform:translateY(22px); }
 #enquiry-form[data-transitioning=true] .question-stage { overflow:hidden; }
 #enquiry-form[data-transitioning=true] .form-actions { pointer-events:none; }
 .enquiry-form-card { transition:opacity .26s ease,transform .26s var(--ease); }
@@ -72,6 +72,6 @@
 @media(prefers-reduced-motion:reduce) { .question-stage,.form-step,.enquiry-form-card { transition:none; } }
 
 @keyframes calendar-month-enter {from {opacity:.35;transform:translateY(4px)} to {opacity:1;transform:none}}
-#calendar-days.month-enter {animation:calendar-month-enter .2s ease-out;}
+#calendar-days.month-enter {animation:calendar-month-enter .42s cubic-bezier(.22,1,.36,1);}
 .motion-reduced #calendar-days.month-enter {animation:none;}
 @media (prefers-reduced-motion:reduce) {#calendar-days.month-enter {animation:none;}}

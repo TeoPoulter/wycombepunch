@@ -255,6 +255,9 @@
     let current = 0, submitting = false, lastDraft = '';
     let autoAdvanceTimer = 0, navigationTimer = 0, settleTimer = 0, navigationVersion = 0, transitioning = false;
     const questionStage = $('#question-stage');
+    // Give the chosen answer time to register before the next question glides in.
+    // These match the exit/entrance durations in enquiry.css.
+    const choicePause = 640, questionExit = 320, questionEntrance = 600;
     const phoneCountry = $('#phone-country'), phoneNational = $('#phone-national');
     function clearAutoAdvance() { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = 0; }
     function lockNavigation(locked) {
@@ -344,8 +347,8 @@
           if (version !== navigationVersion) return;
           lockNavigation(false); questionStage.style.height = '';
           if (focus) renderStep(target, true);
-        }, 260);
-      }, 150);
+        }, questionEntrance);
+      }, questionExit);
     }
     function advance() {
       clearAutoAdvance();
@@ -401,7 +404,7 @@
       autoAdvanceTimer = setTimeout(() => {
         autoAdvanceTimer = 0;
         if (current === origin && field.value === value && !submitting && !transitioning) advance();
-      }, reduced ? 140 : 280);
+      }, reduced ? 140 : choicePause);
     });
     form.addEventListener('keydown', event => {
       if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
