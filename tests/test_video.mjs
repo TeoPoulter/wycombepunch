@@ -16,7 +16,7 @@ class Element extends EventTarget {
   textContent = '';
   innerHTML = '';
   parentElement = null;
-  box = { top: 100, bottom: 720, height: 620, width: 350 };
+  box = { left: 800, top: 100, bottom: 720, height: 620, width: 350 };
   constructor(tag = 'div', document) {
     super(); this.tagName = tag.toUpperCase(); this.document = document;
     const classes = new Set();
@@ -24,6 +24,15 @@ class Element extends EventTarget {
   }
   setAttribute(name, value) { this.attributes[name] = value; }
   getBoundingClientRect() { return this.box; }
+  animate(frames, options) {
+    let finish, reject;
+    const animation = { element: this, frames, options, cancelled: false,
+      finished: new Promise((resolve, fail) => { finish = resolve; reject = fail; }),
+      finish: () => finish(), cancel() { this.cancelled = true; reject(new Error('cancelled')); } };
+    this.document.animations.push(animation);
+    if (!this.document.manualAnimations) queueMicrotask(animation.finish);
+    return animation;
+  }
   focus() {
     this.document.activeElement = this;
     const event = new Event('focusin');
@@ -52,8 +61,10 @@ class Element extends EventTarget {
     return this.children.flatMap(child => [...(tags.includes(child.tagName) ? [child] : []), ...child.querySelectorAll(selector)]);
   }
 }
-function setup({ reducedMotion = false, saveData = false, deferPlay = false } = {}) {
+function setup({ reducedMotion = false, saveData = false, deferPlay = false, manualAnimations = false } = {}) {
   const document = new Element();
+  document.animations = [];
+  document.manualAnimations = manualAnimations;
   const create = tag => new Element(tag, document);
   document.hidden = false;
   document.createElement = create;
@@ -72,6 +83,8 @@ function setup({ reducedMotion = false, saveData = false, deferPlay = false } = 
   video.pause = function () { if (!this.paused) { this.paused = true; this.dispatchEvent(new Event('pause')); } };
   const parts = { controls: create('div'), play: create('button'), mute: create('button'), seek: create('input'), fullscreen: create('button'), status: create('p') };
   const player = create('div');
+  player.getBoundingClientRect = () => player.classList.contains('is-expanded')
+    ? { left: 400, top: 20, bottom: 888, height: 868, width: 490 } : player.box;
   parts.controls.append(parts.seek, parts.play, parts.mute, parts.fullscreen);
   player.append(video, parts.controls, parts.status); main.append(player);
   player.querySelector = selector => selector === 'video' ? video : parts[selector.match(/data-video-(\w+)/)[1]];
@@ -82,7 +95,8 @@ function setup({ reducedMotion = false, saveData = false, deferPlay = false } = 
   let observer;
   class IntersectionObserver { constructor(callback) { observer = callback; } observe() {} }
   window.IntersectionObserver = IntersectionObserver;
-  vm.runInNewContext(code, { document, window, navigator: { connection }, IntersectionObserver, requestAnimationFrame: callback => setImmediate(callback), setTimeout, clearTimeout });
+  vm.runInNewContext(code, { document, window, navigator: { connection }, IntersectionObserver,
+    getComputedStyle: () => ({ backgroundColor: 'rgba(5, 5, 8, 0.93)', backdropFilter: 'blur(14px)' }) });
   const overlay = document.body.children.at(-1);
   return { video, parts, player, document, motion, connection, main, alreadyInert, overlay, close: overlay.children[0],
     view: yes => observer([{ isIntersecting: yes, intersectionRatio: yes ? 0.8 : 0 }]),
@@ -97,6 +111,8 @@ function key(document, name, shiftKey = false) {
 test('muted autoplay starts in view and pauses offscreen, with labelled icon controls', async () => {
   const s = setup();
   assert.equal(s.video.playCount, 0);
+  assert.equal(s.video.muted, true);
+  assert.equal(s.video.defaultMuted, true);
   assert.equal(s.video.controls, false);
   assert.equal(s.parts.controls.hidden, false);
   s.view(true); await settled();
@@ -136,6 +152,68 @@ test('seek and sound remain accessible without a visible timer', () => {
   assert.equal(s.video.currentTime, 10); assert.equal(s.parts.seek.attributes['aria-valuetext'], '0:10 of 0:38');
 });
 
+test('unmute restarts at the beginning and plays audibly; muting never rewinds', async () => {
+  const s = setup();
+  s.video.currentTime = 24;
+  s.parts.mute.click(); await settled();
+  assert.equal(s.video.currentTime, 0);
+  assert.equal(s.video.muted, false);
+  assert.equal(s.video.paused, false);
+  assert.equal(s.video.playCount, 1);
+  s.video.currentTime = 12;
+  s.parts.mute.click(); await settled();
+  assert.equal(s.video.muted, true);
+  assert.equal(s.video.currentTime, 12);
+  assert.equal(s.video.playCount, 1);
+});
+
+test('scroll and visibility resumes retain chosen sound and playback position', async () => {
+  const s = setup(); s.view(true); await settled();
+  s.parts.mute.click(); await settled(); s.video.currentTime = 18;
+  s.view(false); assert.equal(s.video.paused, true);
+  s.view(true); await settled();
+  assert.equal(s.video.muted, false); assert.equal(s.video.currentTime, 18);
+  assert.equal(s.video.paused, false);
+  s.document.hidden = true; s.document.dispatchEvent(new Event('visibilitychange'));
+  s.document.hidden = false; s.document.dispatchEvent(new Event('visibilitychange')); await settled();
+  assert.equal(s.video.muted, false); assert.equal(s.video.currentTime, 18);
+  s.parts.mute.click(); s.video.currentTime = 21; s.view(false); s.view(true); await settled();
+  assert.equal(s.video.muted, true); assert.equal(s.video.currentTime, 21);
+});
+
+test('fullscreen animates from the inline rectangle and reverses before restoring it', async () => {
+  const s = setup({ manualAnimations: true });
+  s.parts.fullscreen.click();
+  const entrance = s.document.animations.slice();
+  assert.equal(entrance.length, 3);
+  assert.equal(entrance[0].element, s.player);
+  assert.match(entrance[0].frames[0].transform, /^translate\(400px, 80px\) scale\(0\.714/);
+  assert.equal(entrance[0].frames[1].transform, 'translate(0px, 0px) scale(1, 1)');
+  assert.ok(entrance[0].options.duration >= 300);
+  entrance.forEach(animation => animation.finish()); await settled();
+  s.close.click();
+  const exit = s.document.animations.slice(3);
+  assert.equal(exit.length, 3);
+  assert.equal(s.overlay.hidden, false);
+  assert.equal(s.player.parentElement, s.overlay.children[1]);
+  assert.match(exit[0].frames[1].transform, /^translate\(400px, 80px\) scale\(0\.714/);
+  exit.forEach(animation => animation.finish()); await settled();
+  assert.equal(s.overlay.hidden, true);
+  assert.equal(s.player.parentElement, s.main);
+  assert.equal(s.document.activeElement, s.parts.fullscreen);
+});
+
+test('Escape during entrance cancels the old animation and waits for the reverse', async () => {
+  const s = setup({ manualAnimations: true }); s.parts.fullscreen.click();
+  const entrance = s.document.animations.slice();
+  key(s.document, 'Escape');
+  assert.ok(entrance.every(animation => animation.cancelled));
+  entrance.forEach(animation => animation.finish()); await settled();
+  assert.equal(s.overlay.hidden, false);
+  s.document.animations.slice(3).forEach(animation => animation.finish()); await settled();
+  assert.equal(s.overlay.hidden, true);
+});
+
 test('fullscreen overlay works without the native fullscreen API and restores focus/background', async () => {
   const s = setup(); s.document.documentElement.style.overflow = 'clip';
   s.parts.fullscreen.click(); await settled();
@@ -172,6 +250,7 @@ test('overlay keeps playing state and user pause across expansion', async () => 
 
 test('reduced-motion close is immediate; ended video needs an explicit replay', async () => {
   const s = setup({ reducedMotion: true }); s.parts.fullscreen.click(); await settled();
+  assert.equal(s.document.animations.length, 0);
   s.close.click(); assert.equal(s.overlay.hidden, true);
   s.video.ended = true; s.video.dispatchEvent(new Event('ended'));
   assert.equal(s.parts.play.attributes['aria-label'], 'Replay video');

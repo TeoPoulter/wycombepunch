@@ -43,7 +43,10 @@
     let returnFocus;
     let restoredBackground = [];
     let previousOverflow;
-    let closeTimer;
+    let transitionAnimations = [];
+    let transitionRevision = 0;
+    let inlineExtraHeight = 0;
+    let inlineRatio = 9 / 16;
     const overlay = document.createElement('div');
     overlay.className = 'punch-video-overlay';
     overlay.hidden = true;
@@ -58,7 +61,8 @@
     overlayStage.className = 'punch-video-overlay-stage';
     overlay.append(overlayClose, overlayStage);
     document.body.append(overlay);
-    const canAutoplay = () => !motion.matches && !window.WP?.reducedMotion && !connection?.saveData;
+    const reducedMotion = () => motion.matches || window.WP?.reducedMotion;
+    const canAutoplay = () => !reducedMotion() && !connection?.saveData;
     const visible = () => expanded || inView;
     const duration = () => Number.isFinite(video.duration) ? video.duration : 0;
     const formatTime = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
@@ -92,7 +96,7 @@
         userPaused = false;
         autoplayBlocked = false;
         if (video.ended) video.currentTime = 0;
-      } else video.muted = true;
+      }
       status.textContent = '';
       try {
         await video.play();
@@ -118,13 +122,55 @@
     }
 
     function toggleMute() {
-      video.muted = !video.muted;
+      if (video.muted) {
+        // The first audible sentence should be the start of the clip.
+        video.muted = false;
+        video.currentTime = 0;
+        start(true);
+      } else video.muted = true;
       update();
     }
 
+    function cancelTransition() {
+      transitionRevision++;
+      for (const animation of transitionAnimations) animation.cancel();
+      transitionAnimations = [];
+    }
+
+    function rectTransform(rect, base) {
+      return `translate(${rect.left - base.left}px, ${rect.top - base.top}px) scale(${rect.width / base.width}, ${rect.height / base.height})`;
+    }
+
+    function animateTransition(from, to, leaving, backdrop) {
+      const base = player.getBoundingClientRect();
+      if (reducedMotion() || !player.animate || !base.width || !base.height) {
+        if (leaving) finishClose();
+        return;
+      }
+      const revision = ++transitionRevision;
+      const timing = { duration: leaving ? 360 : 440, easing: 'cubic-bezier(.22,.72,.18,1)', fill: 'both' };
+      transitionAnimations = [
+        player.animate([
+          { transform: rectTransform(from, base), transformOrigin: '0 0', borderRadius: leaving ? '12px' : '16px' },
+          { transform: rectTransform(to, base), transformOrigin: '0 0', borderRadius: leaving ? '16px' : '12px' }
+        ], timing),
+        // Fade the backdrop independently, so the moving video stays visible.
+        overlay.animate([
+          { backgroundColor: backdrop.backgroundColor, backdropFilter: backdrop.backdropFilter },
+          { backgroundColor: leaving ? 'rgba(5, 5, 8, 0)' : 'rgba(5, 5, 8, 0.93)', backdropFilter: leaving ? 'blur(0px)' : 'blur(14px)' }
+        ], timing),
+        overlayClose.animate([{ opacity: leaving ? 1 : 0 }, { opacity: leaving ? 0 : 1 }], timing)
+      ];
+      Promise.all(transitionAnimations.map(animation => animation.finished.catch(() => {}))).then(() => {
+        if (revision !== transitionRevision) return;
+        if (leaving) finishClose();
+        else cancelTransition();
+      });
+    }
+
     function finishClose() {
-      clearTimeout(closeTimer);
       if (!expanded) return;
+      cancelTransition();
       placeholder.replaceWith(player);
       placeholder = null;
       player.classList.remove('is-expanded');
@@ -147,15 +193,25 @@
     function closeFullscreen() {
       if (!expanded || closing) return;
       closing = true;
-      overlay.classList.remove('is-open');
-      if (motion.matches || window.WP?.reducedMotion) finishClose();
-      else closeTimer = setTimeout(finishClose, 180);
+      // Capture the current on-screen frame before cancelling an entrance that
+      // may still be running. A quick Escape reverses from where the player is.
+      const from = player.getBoundingClientRect();
+      const backdrop = getComputedStyle(overlay);
+      const backdropFrame = { backgroundColor: backdrop.backgroundColor, backdropFilter: backdrop.backdropFilter };
+      cancelTransition();
+      // Recompute the inline height if the viewport changed while expanded.
+      placeholder.style.height = `${placeholder.getBoundingClientRect().width / inlineRatio + inlineExtraHeight}px`;
+      const target = placeholder.getBoundingClientRect();
+      animateTransition(from, target, true, backdropFrame);
     }
 
     function toggleFullscreen() {
       if (expanded) { closeFullscreen(); return; }
       returnFocus = document.activeElement;
       const bounds = player.getBoundingClientRect();
+      const videoBounds = video.getBoundingClientRect();
+      inlineRatio = videoBounds.width / videoBounds.height || 9 / 16;
+      inlineExtraHeight = bounds.height - bounds.width / inlineRatio;
       placeholder = document.createElement('div');
       placeholder.className = 'punch-video-placeholder';
       placeholder.setAttribute('aria-hidden', 'true');
@@ -170,14 +226,16 @@
       restoredBackground = [...document.body.children].filter(element => element !== overlay).map(element => [element, element.inert]);
       for (const [element] of restoredBackground) element.inert = true;
       overlay.hidden = false;
+      overlay.classList.add('is-open');
       update();
       overlayClose.focus({ preventScroll: true });
-      requestAnimationFrame(() => {
-        if (!expanded || closing) return;
-        overlay.classList.add('is-open');
-        // Some browsers pause a media element when it changes parent.
-        if (wasPlaying && video.paused) start(true);
+      // Measuring after reparenting gives the final layout before the browser
+      // paints. Web Animations starts at the old rectangle without a flash.
+      animateTransition(bounds, player.getBoundingClientRect(), false, {
+        backgroundColor: 'rgba(5, 5, 8, 0)', backdropFilter: 'blur(0px)'
       });
+      // Some browsers pause a media element when it changes parent.
+      if (wasPlaying && video.paused) start(true);
     }
 
     overlayClose.addEventListener('click', closeFullscreen);
@@ -238,6 +296,10 @@
       video.controls = true;
     });
     const preferenceChanged = () => {
+      if (reducedMotion()) {
+        if (closing) finishClose();
+        else cancelTransition();
+      }
       if (!canAutoplay()) pauseAutomatically();
       else if (visible()) start(false);
     };
@@ -261,6 +323,10 @@
       observer.observe(video);
     }
     controls.hidden = false;
+    // A new page load always starts quietly; later resumes keep the choice
+    // made by the visitor instead of muting an audible video again.
+    video.defaultMuted = true;
+    video.muted = true;
     video.controls = false;
     video.tabIndex = 0;
     player.dataset.enhanced = 'true';

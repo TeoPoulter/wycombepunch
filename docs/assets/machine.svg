@@ -6,11 +6,17 @@
  <linearGradient id="static-metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#57575e"/><stop offset="1" stop-color="#17171c"/></linearGradient>
  <radialGradient id="static-floor"><stop stop-color="#ee203d" stop-opacity=".2"/><stop offset=".7" stop-color="#ee203d" stop-opacity=".04"/><stop offset="1" stop-color="#ee203d" stop-opacity="0"/></radialGradient>
 </defs>
-<ellipse cx="290" cy="591" rx="235" ry="55" fill="url(#static-floor)"/>
-<ellipse cx="290" cy="591" rx="177" ry="35" fill="none" stroke="#ff2848" stroke-opacity=".15"/>
-<ellipse cx="290" cy="593" rx="138" ry="18" fill="#050506" opacity=".7"/>
-<path d="m193 571 211-23 27 27-1 18-227 27-23-25Z" fill="#1d1d22" stroke="#4c4c54"/>
-<path d="m203 603 224-27 3 17-227 27Z" fill="#09090c"/>
+<g class="cabinet-ground" transform="rotate(-7 317.5 587.4)">
+<ellipse cx="317.5" cy="587.4" rx="235" ry="55" fill="url(#static-floor)"/>
+<ellipse cx="317.5" cy="587.4" rx="177" ry="35" fill="none" stroke="#ff2848" stroke-opacity=".15"/>
+<ellipse cx="317.5" cy="587.4" rx="145" ry="25" fill="#050506" opacity=".7"/>
+</g>
+<g class="cabinet-base" stroke-linejoin="round">
+<path class="base-front" d="M190.5 598.5 385.5 574.6 385 592.6 190 616.5Z" fill="#09090c" stroke="#303037"/>
+<path class="base-side" d="M385.5 574.6 445.5 540.3 445 558.3 385 592.6Z" fill="#131318" stroke="#37373f"/>
+<path class="base-top" d="M190.5 598.5 250.5 564.2 445.5 540.3 385.5 574.6Z" fill="#24242b" stroke="#4c4c54"/>
+<path d="M190.5 598.5 385.5 574.6 445.5 540.3" fill="none" stroke="#62626c" stroke-width=".8" stroke-opacity=".65"/>
+</g>
 <path d="m225 199 169-21-10 392-171 21Z" fill="url(#static-face)" stroke="#53535c" stroke-width="1.6"/>
 <path class="cabinet-side" d="M394 178 436 154 426 546 384 570Z" fill="url(#static-side)" stroke="#6b1527" stroke-width="1.2"/>
 <path d="M404 213 425 201 417 512 396 524Z" fill="#750d20" stroke="#d14459" stroke-opacity=".35"/>

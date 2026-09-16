@@ -253,6 +253,21 @@
     duration.addEventListener('change', syncDuration);
     syncDuration();
     let current = 0, submitting = false, lastDraft = '';
+    let autoAdvanceTimer = 0, navigationTimer = 0, settleTimer = 0, navigationVersion = 0, transitioning = false;
+    const questionStage = $('#question-stage');
+    const phoneCountry = $('#phone-country'), phoneNational = $('#phone-national');
+    function clearAutoAdvance() { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = 0; }
+    function lockNavigation(locked) {
+      transitioning = locked; form.dataset.transitioning = String(locked);
+      if (questionStage) questionStage.inert = locked;
+      [next,back,submit].forEach(button => { button.disabled = locked; });
+    }
+    function cancelTransition() {
+      clearTimeout(navigationTimer); clearTimeout(settleTimer); navigationVersion++;
+      lockNavigation(false);
+      if (questionStage) questionStage.style.height = '';
+      steps.forEach(step => step.classList.remove('is-leaving','is-entering'));
+    }
     const isLocal = location.protocol === 'file:' || ['', 'localhost', '127.0.0.1', '0.0.0.0', '[::1]'].includes(location.hostname);
     const ready = config.enquiriesEnabled === true && identityReady && !isLocal;
     const todayString = () => {
@@ -278,9 +293,9 @@
       const nextText = current === 4 && !message.value.trim() ? 'Skip for now' : current === steps.length - 2 ? 'Review my enquiry' : 'Continue';
       $('#next-label').textContent = nextText;
     }
-    function showStep(index, focus = false) {
-      current = Math.max(0, Math.min(steps.length - 1, index));
-      steps.forEach((step, i) => { step.hidden = i !== current; });
+    function renderStep(index, focus = false) {
+      current = Math.max(0, Math.min(steps.length - 1, Math.trunc(index) || 0));
+      steps.forEach((step, i) => { step.hidden = i !== current; step.classList.remove('is-leaving','is-entering'); });
       back.hidden = current === 0;
       next.hidden = current === steps.length - 1;
       submit.hidden = current !== steps.length - 1;
@@ -296,12 +311,53 @@
         if (box.top < headerHeight + 16 || box.bottom > innerHeight - 90) heading.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
       }
     }
+    function showStep(index, focus = false, immediate = false) {
+      clearAutoAdvance();
+      const target = Math.max(0, Math.min(steps.length - 1, Math.trunc(index) || 0));
+      if (transitioning && !immediate) return;
+      if (immediate || !questionStage || target === current) {
+        cancelTransition(); renderStep(target, focus); return;
+      }
+      const version = ++navigationVersion;
+      if (reduced) {
+        renderStep(target); lockNavigation(true);
+        settleTimer = setTimeout(() => {
+          if (version !== navigationVersion) return;
+          lockNavigation(false);
+          if (focus) renderStep(target, true);
+        }, 180);
+        return;
+      }
+      const previous = steps[current];
+      questionStage.style.height = `${previous.getBoundingClientRect().height}px`;
+      lockNavigation(true);
+      previous.classList.add('is-leaving');
+      navigationTimer = setTimeout(() => {
+        if (version !== navigationVersion) return;
+        renderStep(target);
+        const incoming = steps[current]; incoming.classList.add('is-entering');
+        questionStage.style.height = `${incoming.getBoundingClientRect().height}px`;
+        // Establish the starting opacity/offset before the browser transitions in.
+        void incoming.offsetWidth;
+        requestAnimationFrame(() => { if (version === navigationVersion) incoming.classList.remove('is-entering'); });
+        settleTimer = setTimeout(() => {
+          if (version !== navigationVersion) return;
+          lockNavigation(false); questionStage.style.height = '';
+          if (focus) renderStep(target, true);
+        }, 260);
+      }, 150);
+    }
+    function advance() {
+      clearAutoAdvance();
+      if (submitting || transitioning || current >= steps.length - 1) return;
+      if (validateStep(current)) showStep(current + 1, true);
+    }
     function clearError(step) {
       $('.question-error', step).hidden = true;
       $$('[aria-invalid]', step).forEach(input => input.removeAttribute('aria-invalid'));
     }
     function invalid(index, text, control) {
-      showStep(index);
+      showStep(index, false, true);
       const error = $('.question-error', steps[index]);
       error.textContent = text; error.hidden = false;
       control?.setAttribute('aria-invalid','true');
@@ -317,21 +373,49 @@
         if (date.value && (!/^\d{4}-\d{2}-\d{2}$/.test(date.value) || date.value < todayString())) return invalid(index, 'Choose today or a future date.', $('#date-undecided'));
       }
       if (index === 3 && !duration.value) return invalid(index, 'Choose a hire duration to continue.', $('[data-choice-group="duration"] button'));
+      if (index === 6 && phoneCountry && phoneNational) {
+        form.dispatchEvent(new Event('wp:sync-phone'));
+        if (!phoneNational.value.trim()) return invalid(index, 'Add a phone number we can reach you on.', phoneNational);
+        if (!/^\+[1-9]\d{0,2}$/.test(phoneCountry.value.trim())) return invalid(index, 'Add a country code, for example +44.', phoneCountry);
+        const combined = $('#phone').value;
+        const digits = combined.replace(/\D/g, '');
+        if (!combined || phoneNational.value.replace(/\D/g, '').length < 4 || digits.length < 7 || digits.length > 15) return invalid(index, 'Check your phone number and country code.', phoneNational);
+      }
       for (const input of $$('input,select,textarea', steps[index])) {
         if (input.disabled || input.type === 'hidden') continue;
         input.setCustomValidity('');
-        if (input.required && !input.value.trim()) return invalid(index, input === durationDetail ? 'Tell us how long you’re thinking.' : input.id === 'phone' ? 'Add a phone number we can reach you on.' : 'Please add your ' + ({venue:'venue, town or postcode',name:'name',email:'email address'}[input.id] || 'answer') + '.', input);
+        if (input.required && !input.value.trim()) return invalid(index, input === durationDetail ? 'Tell us how long you’re thinking.' : ['phone','phone-national'].includes(input.id) ? 'Add a phone number we can reach you on.' : 'Please add your ' + ({venue:'venue, town or postcode',name:'name',email:'email address'}[input.id] || 'answer') + '.', input);
         if (input.id === 'phone' && (!/^[+()\d\s.\-]+$/.test(input.value) || input.value.replace(/\D/g,'').length < 7 || input.value.replace(/\D/g,'').length > 15)) return invalid(index, 'Check your phone number, including the country code if needed.', input);
         if (!input.checkValidity()) return invalid(index, input.id === 'email' ? 'Check your email address, for example you@example.com.' : 'Please check this answer.', input);
       }
       return true;
     }
-    form.addEventListener('input', event => { if (event.target.setCustomValidity) event.target.setCustomValidity(''); clearError(steps[current]); updateSummary(); });
-    form.addEventListener('change', () => { clearError(steps[current]); updateSummary(); });
-    next.addEventListener('click', () => { if (validateStep(current)) showStep(current + 1, true); });
-    back.addEventListener('click', () => showStep(current - 1, true));
-    $$('[data-review-step]', form).forEach(button => button.addEventListener('click', () => showStep(Number(button.dataset.reviewStep), true)));
-    document.addEventListener('wp:form-step', event => { if (!submitting) showStep(Number(event.detail) || 0); });
+    form.addEventListener('input', event => { clearAutoAdvance(); if (event.target.setCustomValidity) event.target.setCustomValidity(''); clearError(steps[current]); updateSummary(); });
+    form.addEventListener('change', () => { clearAutoAdvance(); clearError(steps[current]); updateSummary(); });
+    form.addEventListener('wp:choice-commit', event => {
+      clearAutoAdvance();
+      const expected = { 'event-type':0, 'event-date':1, duration:3 }[event.detail?.field];
+      if (submitting || transitioning || current !== expected) return;
+      if (expected === 3 && duration.value === 'Something else') { durationDetail?.focus({preventScroll:true}); return; }
+      const origin = current, field = $('#' + event.detail.field), value = field.value;
+      autoAdvanceTimer = setTimeout(() => {
+        autoAdvanceTimer = 0;
+        if (current === origin && field.value === value && !submitting && !transitioning) advance();
+      }, reduced ? 140 : 280);
+    });
+    form.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target.closest('button, a, summary') || event.target.isContentEditable) return;
+      if (event.shiftKey) return; // Shift+Enter keeps a newline in the notes answer.
+      event.preventDefault();
+      if (!event.repeat) advance();
+    });
+    next.addEventListener('click', advance);
+    back.addEventListener('click', () => { if (!submitting && !transitioning) showStep(current - 1, true); });
+    $$('[data-review-step]', form).forEach(button => button.addEventListener('click', () => { if (!submitting && !transitioning) showStep(Number(button.dataset.reviewStep), true); }));
+    document.addEventListener('wp:form-step', event => { if (!submitting) showStep(Number(event.detail) || 0, false, true); });
+    form.addEventListener('reset', () => { clearAutoAdvance(); cancelTransition(); });
+    window.addEventListener('pagehide', () => { clearAutoAdvance(); cancelTransition(); });
     function showResult(title, messageText, sent = false) {
       $('#form-result-title').textContent = title;
       $('#form-result-text').textContent = messageText;
@@ -347,8 +431,11 @@
     }
     form.addEventListener('submit', async event => {
       event.preventDefault();
-      if (submitting) return;
-      if (current < steps.length - 1) { if (validateStep(current)) showStep(current + 1, true); return; }
+      if (submitting || transitioning) return;
+      if (current < steps.length - 1) { advance(); return; }
+      // A completed review still requires an explicit activation of Send.
+      if (event.submitter !== submit) return;
+      clearAutoAdvance();
       for (let i = 0; i < steps.length; i++) if (!validateStep(i)) return;
       const data = new FormData(form);
       if (String(data.get('_gotcha') || data.get('bot-field') || '').trim()) return;
@@ -388,24 +475,35 @@
       const controller = new AbortController();
       const timeoutMs = Math.max(1000, Math.min(60000, Number(formConfig.timeoutMs) || 15000));
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      let accepted = false;
       try {
         const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type':'application/x-www-form-urlencoded', 'Accept': formConfig.provider === 'formspree' ? 'application/json' : 'text/html' }, body: new URLSearchParams(data).toString(), credentials: formConfig.provider === 'netlify' ? 'same-origin' : 'omit', signal: controller.signal });
         if (!response.ok) throw new Error(response.status === 429 ? 'rate-limit' : `HTTP ${response.status}`);
+        accepted = true;
+        clearTimeout(timeout);
+        submitLabel.textContent = 'Enquiry sent';
         let receiptStored = false;
         try { sessionStorage.setItem('wp:enquiry-sent', String(Date.now())); receiptStored = true; } catch (_) { /* Show the receipt here if storage is unavailable. */ }
-        form.reset();
-        syncDuration();
-        updateSummary();
-        if (receiptStored) location.assign('thank-you.html');
-        else showResult('Enquiry sent', 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.', true);
+        if (receiptStored) {
+          $('.enquiry-form-card').classList.add('is-sent');
+          if (!reduced) await new Promise(resolve => setTimeout(resolve, 260));
+          form.reset(); syncDuration(); updateSummary();
+          location.assign('thank-you.html');
+        } else {
+          form.reset(); syncDuration(); updateSummary(); form.hidden = true;
+          showResult('Enquiry sent', 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.', true);
+        }
       } catch (error) {
-        showResult('We could not confirm receipt', error.message === 'rate-limit' ? 'The form service is receiving too many requests. Please wait before retrying. Your details are still available to copy.' : 'Your details are still here. We could not confirm delivery; please check before retrying to avoid duplicate messages, or copy the enquiry and contact us another way. Nothing has been booked.');
+        if (accepted) {
+          $('.enquiry-form-card').classList.remove('is-sent'); form.hidden = true;
+          showResult('Enquiry sent', 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.', true);
+        } else showResult('We could not confirm receipt', error.message === 'rate-limit' ? 'The form service is receiving too many requests. Please wait before retrying. Your details are still available to copy.' : 'Your details are still here. We could not confirm delivery; please check before retrying to avoid duplicate messages, or copy the enquiry and contact us another way. Nothing has been booked.');
       } finally {
         clearTimeout(timeout);
         submitting = false;
-        fields.disabled = false;
+        fields.disabled = accepted;
         submit.removeAttribute('aria-busy');
-        submitLabel.textContent = normalSubmitLabel;
+        submitLabel.textContent = accepted ? 'Enquiry sent' : normalSubmitLabel;
       }
     });
     $('#copy-enquiry').addEventListener('click', async () => {
@@ -420,7 +518,7 @@
         toast('Select and copy the enquiry text below.');
       }
     });
-    showStep(0);
+    showStep(0, false, true);
     fields.disabled = false; // Listeners are installed before the form becomes interactive.
   }
   $$('[data-copy]').forEach(button => button.addEventListener('click', async () => {

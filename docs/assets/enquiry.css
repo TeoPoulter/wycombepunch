@@ -30,6 +30,7 @@
 .calendar-heading button svg { width:18px; height:18px; }
 .calendar-heading button:disabled { opacity:.25; }
 .calendar-weekdays,.calendar-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; text-align:center; }
+.calendar-days { grid-auto-rows:minmax(40px,auto); }
 .calendar-weekdays { margin-bottom:8px; color:#90909c; font:11px/1.5 var(--mono); }
 .calendar-days button { min-width:0; min-height:40px; padding:7px 0; background:transparent; border:1px solid transparent; border-radius:8px; font-size:14px; line-height:1.2; transition:background .18s,border-color .18s; }
 .calendar-days button:hover:not(:disabled) { background:#2a2029; border-color:#74606a; }
@@ -51,3 +52,26 @@
 .motion-reduced .form-step { animation:none; }
 .motion-reduced .answer-choice { transition:none; transform:none; }
 @media(prefers-reduced-motion:reduce) { .form-step { animation:none; } .answer-choice,.choice-check svg,.calendar-days button { transition:none; } .answer-choice:hover { transform:none; } }
+/* Committed answers move through a short exit, height change, then entrance. */
+.question-stage { position:relative; transition:height .26s var(--ease); }
+.form-step { animation:none; opacity:1; transform:none; transition:opacity .15s ease,transform .22s var(--ease); }
+.form-step.is-leaving { opacity:0; transform:translateY(-10px); }
+.form-step.is-entering { opacity:0; transform:translateY(12px); }
+#enquiry-form[data-transitioning=true] .question-stage { overflow:hidden; }
+#enquiry-form[data-transitioning=true] .form-actions { pointer-events:none; }
+.enquiry-form-card { transition:opacity .26s ease,transform .26s var(--ease); }
+.enquiry-form-card.is-sent { opacity:0; transform:translateY(-12px); pointer-events:none; }
+.phone-answer { display:grid; grid-template-columns:104px minmax(0,1fr); gap:12px; align-items:end; }
+.phone-answer > div { min-width:0; }
+.phone-answer label { display:block; font-size:13px; line-height:1.5; margin:0 0 8px; }
+.phone-answer input, .phone-answer input.answer-input { width:100%; min-width:0; min-height:72px; padding:17px 14px; border-radius:12px; font-size:20px; background:#0f0f13; }
+.phone-answer #phone-country { font-family:var(--mono); font-size:18px; }
+#phone-hint { margin-top:12px; font-size:12px; line-height:1.6; }
+@media(max-width:420px) { .phone-answer { grid-template-columns:90px minmax(0,1fr); gap:9px; } .phone-answer input,.phone-answer input.answer-input { padding-inline:10px; font-size:18px; } .phone-answer #phone-country { font-size:17px; } }
+.motion-reduced .question-stage,.motion-reduced .form-step,.motion-reduced .enquiry-form-card { transition:none; }
+@media(prefers-reduced-motion:reduce) { .question-stage,.form-step,.enquiry-form-card { transition:none; } }
+
+@keyframes calendar-month-enter {from {opacity:.35;transform:translateY(4px)} to {opacity:1;transform:none}}
+#calendar-days.month-enter {animation:calendar-month-enter .2s ease-out;}
+.motion-reduced #calendar-days.month-enter {animation:none;}
+@media (prefers-reduced-motion:reduce) {#calendar-days.month-enter {animation:none;}}

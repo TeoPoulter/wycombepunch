@@ -21,13 +21,18 @@ class Element {
     this.hidden = 'hidden' in attrs; this.type = attrs.type || (tagName === 'button' ? 'submit' : 'text');
     this.id = attrs.id || ''; this.name = attrs.name || ''; this.tabIndex = Number(attrs.tabindex ?? (tagName === 'button' ? 0 : -1));
     for (const [key, value] of Object.entries(attrs)) if (key.startsWith('data-')) this.dataset[key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = value;
-    this.classList = { contains: name => (this.attrs.class || '').split(/\s+/).includes(name) };
+    this.classList = {
+      contains: name => (this.attrs.class || '').split(/\s+/).includes(name),
+      add: (...names) => { this.attrs.class = [...new Set([...(this.attrs.class || '').split(/\s+/), ...names])].join(' '); },
+      remove: (...names) => { this.attrs.class = (this.attrs.class || '').split(/\s+/).filter(name=>!names.includes(name)).join(' '); }
+    };
   }
   get effectivelyDisabled() { return this.disabled || !!this.parentNode?.closest('fieldset')?.disabled; }
   append(node) { node.parentNode = this; this.children.push(node); }
   replaceChildren(...nodes) { this.children.forEach(n => { n.parentNode = null; }); this.children = []; nodes.forEach(n => this.append(n)); }
   matches(selector) {
     const s = selector.trim();
+    if (s.includes(',')) return s.split(',').some(part=>this.matches(part));
     if (s.includes(':not(:disabled)')) return !this.effectivelyDisabled && this.matches(s.replace(':not(:disabled)', ''));
     if (s === ':disabled') return this.effectivelyDisabled;
     if (s.startsWith('#')) return this.id === s.slice(1);
@@ -106,7 +111,10 @@ class FixedDate extends Date {
   constructor(...args) { super(...(args.length?args:[2026,8,15,12])); }
   static now() { return new FixedDate().getTime(); }
 }
-function fixture({local=false,storageDenied=false,response={ok:true,status:200},deferred=false}={}) {
+function fixture({local=false,storageDenied=false,response={ok:true,status:200},deferred=false,reduced=true}={}) {
+  let now=0, timerId=0; const timers=new Map();
+  const schedule=(fn,delay=0)=>{const id=++timerId;timers.set(id,{fn,at:now+delay});return id;};
+  const tick=ms=>{const end=now+ms;let count=0;while(true){const job=[...timers].filter(([,v])=>v.at<=end).sort((a,b)=>a[1].at-b[1].at||a[0]-b[0])[0];if(!job)break;if(++count>500)throw Error('Timer loop');now=job[1].at;timers.delete(job[0]);job[1].fn();}now=end;};
   const document=parse(); const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>r.querySelectorAll(s);
   const fetches=[], redirects=[], receipts=[], toasts=[]; let release;
   const location={protocol:'https:',hostname:local?'localhost':'wycombepunch.com',assign:url=>redirects.push(url)};
@@ -114,25 +122,25 @@ function fixture({local=false,storageDenied=false,response={ok:true,status:200},
   class FormDataModel extends Map {
     constructor(form) {super();for(const input of form.querySelectorAll('input,textarea,select')) if(input.name&&!input.effectivelyDisabled)this.set(input.name,input.value);}
   }
-  const context=vm.createContext({document,window:{},$, $$,location,formConfig,config:{enquiriesEnabled:true},identityReady:true,reduced:true,innerHeight:900,
+  const context=vm.createContext({document,window:new Element('window',{},document),$, $$,location,formConfig,config:{enquiriesEnabled:true},identityReady:true,reduced,innerHeight:900,
     business:{},contact:{},emailValid:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),toast:message=>toasts.push(message),
     navigator:{clipboard:{writeText:async text=>{context.copied=text;}}},
     sessionStorage:{setItem:(key,value)=>{if(storageDenied)throw Error('Denied');receipts.push({key,value});}},
-    FormData:FormDataModel,URL,URLSearchParams,AbortController,Date:FixedDate,Event:TestEvent,CustomEvent:TestEvent,queueMicrotask,setTimeout,clearTimeout,
+    FormData:FormDataModel,URL,URLSearchParams,AbortController,Date:FixedDate,Event:TestEvent,CustomEvent:TestEvent,queueMicrotask,setTimeout:schedule,clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>schedule(fn,16),
     fetch:async(url,options)=>{fetches.push({url,options,data:Object.fromEntries(new URLSearchParams(options.body))});if(deferred)return new Promise(resolve=>{release=resolve;});if(response instanceof Error)throw response;return response;}});
   vm.runInContext(widgetSource,context);
   vm.runInContext(`(()=>{${controller}})()`,context);
   const form=$('#enquiry-form');
-  return {$,$$,document,context,fetches,redirects,receipts,toasts,form,
+  return {$,$$,document,context,fetches,redirects,receipts,toasts,form,tick,
     set(id,value){const el=$('#'+id);el.value=value;el.dispatchEvent(new TestEvent('input',{bubbles:true}));el.dispatchEvent(new TestEvent('change',{bubbles:true}));},
     choose(group,value){const button=$$('[data-choice]', $(`[data-choice-group="${group}"]`)).find(b=>b.dataset.choice===value);assert.ok(button,`${group} has ${value}`);button.click();},
     go(index){document.dispatchEvent(new TestEvent('wp:form-step',{detail:index}));},
-    next(){ $('#form-next').click(); },step(){return Number(form.dataset.step);},
-    key(target,key){const event=new TestEvent('keydown',{key,bubbles:true});target.dispatchEvent(event);return event.defaultPrevented;},
-    async submit(){form.dispatchEvent(new TestEvent('submit'));await Promise.resolve();},
-    async settle(){await Promise.all(document.pending.splice(0));await Promise.resolve();},
+    next(){ $('#form-next').click();tick(500); },step(){return Number(form.dataset.step);},
+    key(target,key,options={}){const event=new TestEvent('keydown',{key,bubbles:true,...options});target.dispatchEvent(event);return event.defaultPrevented;},
+    async submit(explicit=true){form.dispatchEvent(new TestEvent('submit',{submitter:explicit?$('#submit-enquiry'):undefined}));await Promise.resolve();},
+    async settle(){await Promise.resolve();tick(1000);await Promise.all(document.pending.splice(0));await Promise.resolve();},
     resolve(value=response){release(value);},
-    fillValid(){this.choose('event-type','Eid celebration');$('#date-undecided').click();this.set('venue',' High Wycombe ');this.choose('duration','3–5 hours');this.set('name',' Test Guest ');this.set('phone',' +44 7700 900123 ');this.set('email','guest@example.com');this.go(8);}
+    fillValid(){this.choose('event-type','Eid celebration');$('#date-undecided').click();this.set('venue',' High Wycombe ');this.choose('duration','3–5 hours');this.set('name',' Test Guest ');this.set('phone-national',' 07700 900123 ');this.set('email','guest@example.com');this.go(8);}
   };
 }
 
@@ -145,9 +153,9 @@ test('custom occasion and duration are required, and Next cannot skip either que
   assert.equal(f.$('#next-label').textContent,'Skip for now');
 });
 test('required phone and email return to their own visible questions on final validation',async()=>{
-  const f=fixture();f.fillValid();f.set('phone','   ');await f.submit();assert.equal(f.step(),6);assert.equal(f.document.activeElement,f.$('#phone'));assert.equal(f.fetches.length,0);
-  f.set('phone','not a phone');f.next();assert.equal(f.step(),6);
-  f.set('phone','+44 (0) 1494 123456');f.next();assert.equal(f.step(),7);f.set('email','wrong@');f.next();assert.equal(f.step(),7);
+  const f=fixture();f.fillValid();f.set('phone-national','   ');await f.submit();assert.equal(f.step(),6);assert.equal(f.document.activeElement,f.$('#phone-national'));assert.equal(f.fetches.length,0);
+  f.set('phone-national','not a phone');f.next();assert.equal(f.step(),6);
+  f.set('phone-national','+44 (0) 1494 123456');f.next();assert.equal(f.step(),7);f.set('email','wrong@');f.next();assert.equal(f.step(),7);
   f.set('email','guest@example.com');f.next();assert.equal(f.step(),8);assert.equal(f.fetches.length,0);
 });
 test('custom duration is required only when selected and excluded after switching away',async()=>{
@@ -158,17 +166,17 @@ test('custom duration is required only when selected and excluded after switchin
 test('exact payload retains hidden-step answers and trims contact values before disabling controls',async()=>{
   const f=fixture();f.fillValid();f.choose('duration','Something else');f.set('duration-detail',' 2 hours from 6pm ');f.set('message','Bring it downstairs.');await f.submit();await f.settle();
   assert.equal(f.fetches.length,1);assert.equal(f.fetches[0].url,'https://formspree.io/f/xppwapkw');
-  assert.deepEqual(f.fetches[0].data,{'form-name':'wycombe-punch-enquiry',_gotcha:'','event-type':'Eid celebration','event-date':'',venue:'High Wycombe',duration:'Something else','duration-detail':'2 hours from 6pm',message:'Bring it downstairs.',name:'Test Guest',phone:'+44 7700 900123',email:'guest@example.com'});
+  assert.deepEqual(f.fetches[0].data,{'form-name':'wycombe-punch-enquiry',_gotcha:'','event-type':'Eid celebration','event-date':'',venue:'High Wycombe',duration:'Something else','duration-detail':'2 hours from 6pm',message:'Bring it downstairs.',name:'Test Guest',phone:'+44 7700900123',email:'guest@example.com'});
   assert.deepEqual(f.redirects,['thank-you.html']);assert.equal(f.receipts.length,1);
 });
 test('double submission is locked until response; all answers survive a failed request',async()=>{
   const f=fixture({deferred:true});f.fillValid();await f.submit();await f.submit();assert.equal(f.fetches.length,1);assert.equal(f.$('#enquiry-fields').disabled,true);
-  f.resolve({ok:false,status:429});await f.settle();assert.equal(f.$('#enquiry-fields').disabled,false);assert.equal(f.$('#name').value,' Test Guest ');assert.equal(f.$('#phone').value,' +44 7700 900123 ');
+  f.resolve({ok:false,status:429});await f.settle();assert.equal(f.$('#enquiry-fields').disabled,false);assert.equal(f.$('#name').value,' Test Guest ');assert.equal(f.$('#phone').value,'+44 7700900123');
   assert.equal(f.redirects.length,0);assert.equal(f.receipts.length,0);assert.match(f.$('#form-result-text').textContent,/too many requests/);
 });
 test('network failure never claims success or redirects, and copying stays neutral',async()=>{
   const f=fixture({response:new Error('Network disconnected')});f.fillValid();await f.submit();await f.settle();assert.equal(f.redirects.length,0);assert.equal(f.receipts.length,0);assert.match(f.$('#form-result-text').textContent,/could not confirm delivery/);
-  f.$('#copy-enquiry').click();await f.settle();assert.equal(f.toasts.at(-1),'Enquiry details copied.');assert.match(f.context.copied,/Phone: \+44 7700 900123/);
+  f.$('#copy-enquiry').click();await f.settle();assert.equal(f.toasts.at(-1),'Enquiry details copied.');assert.match(f.context.copied,/Phone: \+44 7700900123/);
 });
 test('local preview submits nothing; storage-denied live success stays explicitly sent',async()=>{
   const local=fixture({local:true});local.fillValid();await local.submit();await local.settle();assert.equal(local.fetches.length,0);assert.match(local.$('#form-result-title').textContent,/not sent/);
@@ -199,7 +207,7 @@ test('explicitly unknown dates are valid, but a stale past date fails again at s
   f.$('#date-undecided').click();f.go(8);await f.submit();await f.settle();assert.equal(f.fetches[0].data['event-date'],'');
 });
 test('Enter-style form submission advances questions but cannot send before the explicit review',async()=>{
-  const f=fixture();f.choose('event-type','Family gathering');await f.submit();assert.equal(f.step(),1);assert.equal(f.fetches.length,0);
+  const f=fixture();f.choose('event-type','Family gathering');await f.submit();assert.equal(f.step(),1);assert.equal(f.fetches.length,0);f.tick(500);
   f.$('#date-undecided').click();await f.submit();assert.equal(f.step(),2);assert.equal(f.fetches.length,0);
 });
 test('honeypot content blocks submissions without creating a success receipt',async()=>{
@@ -208,4 +216,95 @@ test('honeypot content blocks submissions without creating a success receipt',as
 test('calendar PageDown handles short months, and reset clears its chosen date and radio state',async()=>{
   const f=fixture();f.$('[data-calendar-next]').click();const oct31=f.$('#calendar-days').querySelector('[data-date="2026-10-31"]');oct31.focus();f.key(oct31,'PageDown');assert.equal(f.document.activeElement.dataset.date,'2026-11-30');
   f.document.activeElement.click();f.choose('duration','Full day');f.form.reset();await Promise.resolve();assert.equal(f.$('#event-date').value,'');assert.equal(f.$('#event-date').dataset.chosen,'');assert.match(f.$('#calendar-month').textContent,/September 2026/);assert.equal(f.$('#date-selection').textContent,'');assert.ok(f.$$('[data-choice]').every(b=>b.getAttribute('aria-checked')==='false'));
+});
+
+test('committed choices show brief feedback, advance once, and prevent rapid double navigation in both motion modes',()=>{
+  for(const reduced of [true,false]) {
+    const f=fixture({reduced});f.$('#date-undecided').click(); // Pre-existing answer on the next question.
+    f.choose('event-type','Family gathering');f.choose('event-type','Family gathering');
+    f.tick(reduced?139:279);assert.equal(f.step(),0);
+    f.tick(1);assert.equal(f.form.dataset.transitioning,'true');
+    f.$('#form-next').click();f.$('#form-next').click();
+    f.tick(500);assert.equal(f.step(),1);assert.equal(f.form.dataset.transitioning,'false');
+    f.$('#form-next').click();f.$('#form-next').click();f.tick(500);assert.equal(f.step(),2);
+  }
+});
+test('arrow-key choice browsing does not advance until explicitly committed',()=>{
+  const f=fixture();const buttons=f.$$('[data-choice]',f.$('[data-choice-group="event-type"]'));
+  buttons[0].focus();f.key(buttons[0],'ArrowRight');f.tick(1000);assert.equal(f.step(),0);
+  buttons[1].click();f.tick(140);assert.equal(f.step(),1);f.tick(500);assert.equal(f.step(),1);
+});
+test('calendar navigation stays on the date question; choosing a day or undecided advances',()=>{
+  const f=fixture();f.go(1);f.$('[data-calendar-next]').click();f.tick(1000);assert.equal(f.step(),1);
+  const day=f.$('[data-date="2026-10-15"]');day.focus();f.key(day,'ArrowRight');f.tick(1000);assert.equal(f.step(),1);assert.equal(f.$('#event-date').value,'');
+  f.document.activeElement.click();f.tick(500);assert.equal(f.step(),2);assert.equal(f.$('#event-date').value,'2026-10-16');
+  f.go(1);f.$('#date-undecided').click();f.tick(500);assert.equal(f.step(),2);assert.equal(f.$('#event-date').value,'');
+});
+test('Something else stays for its detail; committed standard duration advances',()=>{
+  const f=fixture();f.go(3);f.choose('duration','Something else');f.tick(1000);assert.equal(f.step(),3);assert.equal(f.document.activeElement,f.$('#duration-detail'));
+  f.key(f.$('#duration-detail'),'Enter');assert.equal(f.step(),3);
+  f.set('duration-detail','Two hours');f.key(f.$('#duration-detail'),'Enter');f.tick(500);assert.equal(f.step(),4);
+  f.go(3);f.choose('duration','3–5 hours');f.tick(500);assert.equal(f.step(),4);
+});
+test('changes and Back cancel stale choice timers, and forced navigation cancels stale transition callbacks',()=>{
+  const f=fixture({reduced:false});f.choose('event-type','Family gathering');f.tick(100);
+  f.set('event-type','Eid celebration');f.tick(1000);assert.equal(f.step(),0);
+  f.go(1);f.$('#date-undecided').click();f.$('#form-back').click();f.tick(1000);assert.equal(f.step(),0);
+  f.choose('event-type','Family gathering');f.tick(300);assert.equal(f.form.dataset.transitioning,'true');
+  f.go(5);f.tick(1000);assert.equal(f.step(),5);assert.equal(f.form.dataset.transitioning,'false');assert.equal(f.$('#question-stage').inert,false);assert.equal(f.$('#question-stage').style.height,'');
+});
+test('Enter validates plain answers, held Enter cannot skip questions after a transition, and notes preserve Shift+Enter',()=>{
+  const f=fixture({reduced:false});f.go(2);
+  assert.equal(f.key(f.$('#venue'),'Enter'),true);assert.equal(f.step(),2);
+  f.set('venue','High Wycombe');f.choose('duration','Full day');
+  f.key(f.$('#venue'),'Enter');f.key(f.$('#venue'),'Enter',{repeat:true});f.tick(1000);assert.equal(f.step(),3);
+  f.key(f.$('#question-3'),'Enter',{repeat:true});f.tick(1000);assert.equal(f.step(),3);
+  f.key(f.$('#question-3'),'Enter');f.tick(1000);assert.equal(f.step(),4);
+  assert.equal(f.key(f.$('#message'),'Enter',{shiftKey:true}),false);assert.equal(f.step(),4);
+  assert.equal(f.key(f.$('#message'),'Enter'),true);f.tick(1000);assert.equal(f.step(),5);
+});
+test('Enter preserves buttons, links, modifiers and composition; final review requires explicit Send',async()=>{
+  const f=fixture();f.fillValid();
+  for(const button of [f.$('#form-back'),f.$('[data-review-step]'),f.$('#submit-enquiry')]) assert.equal(f.key(button,'Enter'),false);
+  const link=f.$('a',f.form);assert.ok(link);assert.equal(f.key(link,'Enter'),false);
+  for(const modifier of ['ctrlKey','metaKey','altKey','isComposing']) assert.equal(f.key(f.$('#question-8'),'Enter',{[modifier]:true}),false);
+  assert.equal(f.key(f.$('#question-8'),'Enter'),true);await f.submit(false);await f.settle();assert.equal(f.step(),8);assert.equal(f.fetches.length,0);
+  assert.equal(f.key(f.$('#submit-enquiry'),'Enter',{repeat:true}),true);
+  await f.submit();await f.settle();assert.equal(f.fetches.length,1);
+});
+test('phone defaults to UK and combines one existing payload field; pasted international and Italian zero survive',async()=>{
+  const f=fixture({response:new Error('offline')});assert.equal(f.$('#phone-country').value,'+44');f.fillValid();
+  assert.equal(f.$('#phone').value,'+44 7700900123');assert.equal(f.$('[data-summary="phone"]').textContent,'+44 7700900123');
+  const pasted=new TestEvent('paste',{bubbles:true,clipboardData:{getData:()=>'+39 06 1234 5678'}});f.$('#phone-national').dispatchEvent(pasted);
+  assert.equal(pasted.defaultPrevented,true);assert.equal(f.$('#phone-country').value,'+39');assert.equal(f.$('#phone-national').value,'0612345678');assert.equal(f.$('#phone').value,'+39 0612345678');
+  await f.submit();await f.settle();assert.equal(f.fetches[0].data.phone,'+39 0612345678');assert.ok(!Object.hasOwn(f.fetches[0].data,'phone-country'));assert.ok(!Object.hasOwn(f.fetches[0].data,'phone-national'));
+  f.$('#copy-enquiry').click();await f.settle();assert.match(f.context.copied,/Phone: \+39 0612345678/);
+  f.set('phone-national','0044 (0) 7700 900123');assert.equal(f.$('#phone-country').value,'+44');assert.equal(f.$('#phone').value,'+44 7700900123');
+  f.set('phone-national','+1 (202) 555-0123');assert.equal(f.$('#phone-country').value,'+1');assert.equal(f.$('#phone').value,'+1 2025550123');
+  f.set('phone-country','+33');f.set('phone-national','0123456789');assert.equal(f.$('#phone').value,'+33 0123456789');
+});
+test('country code alone cannot satisfy phone requirement and malformed or overlong numbers cannot submit',async()=>{
+  const f=fixture();f.fillValid();f.set('phone-national','');await f.submit();assert.equal(f.step(),6);assert.equal(f.fetches.length,0);
+  f.set('phone-national','07700 900123');f.set('phone-country','+000');f.next();assert.equal(f.step(),6);assert.equal(f.document.activeElement,f.$('#phone-country'));
+  f.set('phone-country','44');assert.equal(f.$('#phone-country').value,'+44');f.set('phone-national','123456789012345');f.next();assert.equal(f.step(),6);
+  f.set('phone-national','letters 123456789');f.next();assert.equal(f.step(),6);
+  f.set('phone-national','7700900123');f.next();assert.equal(f.step(),7);
+});
+test('success exit starts only after acceptance, then redirects after its animation; failed requests retain the form',async()=>{
+  const f=fixture({reduced:false,deferred:true});f.fillValid();await f.submit();assert.equal(f.redirects.length,0);assert.equal(f.$('.enquiry-form-card').classList.contains('is-sent'),false);
+  f.tick(500);assert.equal(f.redirects.length,0);f.resolve({ok:true,status:200});for(let i=0;i<6;i++)await Promise.resolve();
+  assert.equal(f.$('.enquiry-form-card').classList.contains('is-sent'),true);assert.equal(f.receipts.length,1);assert.equal(f.redirects.length,0);
+  f.tick(259);assert.equal(f.redirects.length,0);f.tick(1);await f.settle();assert.deepEqual(f.redirects,['thank-you.html']);
+  const failed=fixture({reduced:false,response:{ok:false,status:503}});failed.fillValid();await failed.submit();await failed.settle();assert.equal(failed.$('.enquiry-form-card').classList.contains('is-sent'),false);assert.equal(failed.form.hidden,false);assert.equal(failed.$('#phone-national').value,' 07700 900123 ');
+});
+
+
+test('calendar months always reserve six rows without making blank cells interactive',()=>{
+  const f=fixture();const days=f.$('#calendar-days');
+  for(let i=0;i<12;i++) {
+    assert.equal(days.children.length,42);
+    assert.ok(days.children.filter(cell=>cell.tagName==='SPAN').every(cell=>cell.getAttribute('aria-hidden')==='true'));
+    assert.equal(days.querySelectorAll('button:not(:disabled)').filter(button=>button.tabIndex===0).length,1);
+    f.$('[data-calendar-next]').click();
+  }
 });

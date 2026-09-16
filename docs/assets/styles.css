@@ -807,3 +807,17 @@ p,.preview-notice,.text-link,.button,.occasion-bottom { overflow-wrap: break-wor
 .duration-other { margin-top: 18px; padding-top: 4px; animation: duration-in .22s ease-out; }
 @keyframes duration-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
 .punch-video .video-credit { margin: 0 12px 14px; font-size: 11px; }
+
+/* Quiet coverage state and the confirmation page's three actions. */
+.coverage-response:empty { display:none; }
+.message-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:20px; margin-top:32px; }
+.message-actions .text-link { margin:0; }
+.message-actions .instagram-icon-button { width:58px; min-width:58px; padding:15px; color:var(--red); border-color:#6a3340; }
+.message-actions .instagram-icon-button .icon { width:24px; height:24px; }
+.confirmation-page { animation:confirmation-enter .65s var(--ease) both; }
+.confirmation-page .message-icon { animation:confirmation-tick .75s var(--ease) both; }
+@keyframes confirmation-enter { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes confirmation-tick { from { opacity:0; transform:scale(.75); } to { opacity:1; transform:scale(1); } }
+@media(max-width:580px) { .message-actions { gap:22px; } .message-actions > .button:first-child { flex:1 1 100%; } }
+.motion-reduced .confirmation-page,.motion-reduced .confirmation-page .message-icon { animation:none; }
+@media(prefers-reduced-motion:reduce) { .confirmation-page,.confirmation-page .message-icon { animation:none; } }
