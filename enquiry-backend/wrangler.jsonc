@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wycombe-punch-enquiries",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-16",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {"enabled": false},
+  "vars": {"FROM_EMAIL": "Wycombe Punch <no-reply@wycombepunch.com>"},
+  "d1_databases": [{"binding":"DB", "database_name":"wycombe-punch-enquiries", "database_id":"REPLACE_WITH_CREATED_D1_DATABASE_ID"}],
+  "ratelimits": [{"name":"ENQUIRY_RATE_LIMITER", "namespace_id":"1609202602", "simple":{"limit":10,"period":60}}],
+  "triggers": {"crons":["*/5 * * * *"]}
+}

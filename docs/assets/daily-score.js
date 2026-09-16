@@ -23,6 +23,8 @@
   let revision = 0;
   let resetTimer;
   let lastRequestAt = 0;
+  // Server-confirmed maxima only, kept separate by mode and UK day.
+  const confirmedByMode = new Map();
   panel.hidden = false;
 
   function unavailable() {
@@ -69,14 +71,20 @@
           (run && (record.highScore === null || record.highScore < run.score))) {
         throw new Error('Invalid daily score response');
       }
-      if (requestRevision !== revision || mode !== currentMode()) return;
-      value.textContent = record.highScore === null ? '—' : String(record.highScore).padStart(3, '0');
+      const previous = confirmedByMode.get(mode);
+      if (previous && record.day < previous.day) return;
+      const highScore = previous?.day === record.day && previous.highScore !== null
+        ? Math.max(previous.highScore, record.highScore ?? 0) : record.highScore;
+      confirmedByMode.set(mode, { day: record.day, highScore });
+      if (mode !== currentMode()) return;
+      value.textContent = highScore === null ? '—' : String(highScore).padStart(3, '0');
       const modeLabel = mode === 'motion-free' ? 'Motion-free mode' : 'Precision mode';
-      status.textContent = record.highScore === null
+      status.textContent = highScore === null
         ? `Be the first today. ${modeLabel} · resets at midnight UK time.`
-        : `${run ? 'Your score is in. ' : ''}Across all players · ${modeLabel} · resets at midnight UK time.`;
+        : `${run && requestRevision === revision ? 'Your score is in. ' : ''}Across all players · ${modeLabel} · resets at midnight UK time.`;
       panel.dataset.state = 'ready';
       // Refresh automatically at the server's next UK midnight, including DST.
+      clearTimeout(resetTimer);
       resetTimer = setTimeout(() => refresh(), Math.max(1000, resetAt - Date.now() + 250));
     } catch (_) {
       if (requestRevision === revision && mode === currentMode()) unavailable();

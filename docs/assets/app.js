@@ -110,9 +110,10 @@
   if (nonEmpty(business.contactAddress)) $$('[data-operator-address]').forEach(el => { el.textContent = `Contact address: ${business.contactAddress.trim()}`; el.hidden = false; });
   const identityReady = nonEmpty(business.operatorName) && (emailValid(business.privacyEmail) || /^[A-Za-z0-9_.]{1,30}$/.test(instagram));
   if (identityReady && config.enquiriesEnabled === true) $$('[data-legal-preview]').forEach(el => { el.hidden = true; });
-  const providerNames = { netlify: 'Netlify Forms', formspree: 'Formspree', email: 'your chosen email application (draft only)' };
+  const providerNames = { netlify: 'Netlify Forms', formspree: 'Formspree', worker: 'Formspree', email: 'your chosen email application (draft only)' };
+  $$('[data-email-delivery-notice]').forEach(el => { el.hidden = formConfig.provider !== 'worker' || config.enquiriesEnabled !== true; });
   $$('[data-form-provider]').forEach(el => { el.textContent = config.enquiriesEnabled === true ? (providerNames[formConfig.provider] || 'not configured') : 'not enabled for submissions'; });
-  const providerPrivacy = { netlify: ['Netlify’s privacy information', 'https://www.netlify.com/privacy/'], formspree: ['Formspree’s privacy information', 'https://formspree.io/legal/privacy-policy/'] }[formConfig.provider];
+  const providerPrivacy = { netlify: ['Netlify’s privacy information', 'https://www.netlify.com/privacy/'], formspree: ['Formspree’s privacy information', 'https://formspree.io/legal/privacy-policy/'], worker: ['Formspree’s privacy information', 'https://formspree.io/legal/privacy-policy/'] }[formConfig.provider];
   if (providerPrivacy && config.enquiriesEnabled === true) $$('[data-provider-notice]').forEach(el => {
     const link = document.createElement('a'); link.textContent = providerPrivacy[0]; link.href = providerPrivacy[1]; link.target = '_blank'; link.rel = 'noopener noreferrer'; el.replaceChildren(link); el.hidden = false;
   });
@@ -469,6 +470,10 @@
           if (url.protocol !== 'https:' || url.hostname !== 'formspree.io' || !/^\/f\/[A-Za-z0-9]+$/.test(url.pathname) || url.username || url.password) throw new Error('Invalid endpoint');
           endpoint = url.href;
         } catch (_) { showResult('The enquiry endpoint is not configured', 'Nothing has been sent. Copy your enquiry while the owner connects a valid Formspree endpoint.'); return; }
+      } else if (formConfig.provider === 'worker') {
+        if (!window.WP_ENQUIRY_DELIVERY || !formConfig.endpoint || !formConfig.turnstileSiteKey) {
+          showResult('The enquiry service is not connected', 'Nothing has been sent. Please message us on Instagram while we reconnect the form.'); return;
+        }
       } else { showResult('No enquiry service is configured', 'Nothing has been sent. Copy your details and use an established contact method.'); return; }
       submitting = true;
       fields.disabled = true;
@@ -476,12 +481,18 @@
       submitLabel.textContent = 'Sending your enquiry…';
       result.hidden = true;
       const controller = new AbortController();
-      const timeoutMs = Math.max(1000, Math.min(60000, Number(formConfig.timeoutMs) || 15000));
+      const timeoutMs = formConfig.provider === 'worker' ? 180000 : Math.max(1000, Math.min(60000, Number(formConfig.timeoutMs) || 15000));
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       let accepted = false;
       try {
-        const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type':'application/x-www-form-urlencoded', 'Accept': formConfig.provider === 'formspree' ? 'application/json' : 'text/html' }, body: new URLSearchParams(data).toString(), credentials: formConfig.provider === 'netlify' ? 'same-origin' : 'omit', signal: controller.signal });
-        if (!response.ok) throw new Error(response.status === 429 ? 'rate-limit' : `HTTP ${response.status}`);
+        if (formConfig.provider === 'worker') {
+          $('#enquiry-security').hidden = false;
+          const receipt = await window.WP_ENQUIRY_DELIVERY.send(data, { endpoint: formConfig.endpoint, siteKey: formConfig.turnstileSiteKey, container: $('#enquiry-security'), signal: controller.signal });
+          if (receipt?.accepted !== true) throw new Error('Unconfirmed receipt');
+        } else {
+          const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type':'application/x-www-form-urlencoded', 'Accept': formConfig.provider === 'formspree' ? 'application/json' : 'text/html' }, body: new URLSearchParams(data).toString(), credentials: formConfig.provider === 'netlify' ? 'same-origin' : 'omit', signal: controller.signal });
+          if (!response.ok) throw new Error(response.status === 429 ? 'rate-limit' : `HTTP ${response.status}`);
+        }
         accepted = true;
         clearTimeout(timeout);
         submitLabel.textContent = 'Enquiry sent';
@@ -500,9 +511,10 @@
         if (accepted) {
           $('.enquiry-form-card').classList.remove('is-sent'); form.hidden = true;
           showResult('Enquiry sent', 'Thanks — your enquiry has been sent. We’ll get back to you with availability and a quote.', true);
-        } else showResult('We could not confirm receipt', error.message === 'rate-limit' ? 'The form service is receiving too many requests. Please wait before retrying. Your details are still available to copy.' : 'Your details are still here. We could not confirm delivery; please check before retrying to avoid duplicate messages, or copy the enquiry and contact us another way. Nothing has been booked.');
+        } else showResult('We could not confirm receipt', error.userMessage || (error.message === 'rate-limit' ? 'The form service is receiving too many requests. Please wait before retrying. Your details are still available to copy.' : 'Your details are still here. We could not confirm delivery; please check before retrying to avoid duplicate messages, or copy the enquiry and contact us another way. Nothing has been booked.'));
       } finally {
         clearTimeout(timeout);
+        if ($('#enquiry-security')) $('#enquiry-security').hidden = true;
         submitting = false;
         fields.disabled = accepted;
         submit.removeAttribute('aria-busy');

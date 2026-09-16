@@ -111,14 +111,14 @@ class FixedDate extends Date {
   constructor(...args) { super(...(args.length?args:[2026,8,15,12])); }
   static now() { return new FixedDate().getTime(); }
 }
-function fixture({local=false,storageDenied=false,response={ok:true,status:200},deferred=false,reduced=true}={}) {
+function fixture({local=false,storageDenied=false,response={ok:true,status:200},deferred=false,reduced=true,provider='formspree',delivery=null}={}) {
   let now=0, timerId=0; const timers=new Map();
   const schedule=(fn,delay=0)=>{const id=++timerId;timers.set(id,{fn,at:now+delay});return id;};
   const tick=ms=>{const end=now+ms;let count=0;while(true){const job=[...timers].filter(([,v])=>v.at<=end).sort((a,b)=>a[1].at-b[1].at||a[0]-b[0])[0];if(!job)break;if(++count>500)throw Error('Timer loop');now=job[1].at;timers.delete(job[0]);job[1].fn();}now=end;};
   const document=parse(); const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>r.querySelectorAll(s);
   const fetches=[], redirects=[], receipts=[], toasts=[]; let release;
   const location={protocol:'https:',hostname:local?'localhost':'wycombepunch.com',assign:url=>redirects.push(url)};
-  const formConfig={provider:'formspree',endpoint:'https://formspree.io/f/xppwapkw',timeoutMs:15000};
+  const formConfig={provider,endpoint:provider==='worker'?'https://enquiries.example.workers.dev/enquiry':'https://formspree.io/f/xppwapkw',turnstileSiteKey:provider==='worker'?'test-site-key':undefined,timeoutMs:15000};
   class FormDataModel extends Map {
     constructor(form) {super();for(const input of form.querySelectorAll('input,textarea,select')) if(input.name&&!input.effectivelyDisabled)this.set(input.name,input.value);}
   }
@@ -128,6 +128,7 @@ function fixture({local=false,storageDenied=false,response={ok:true,status:200},
     sessionStorage:{setItem:(key,value)=>{if(storageDenied)throw Error('Denied');receipts.push({key,value});}},
     FormData:FormDataModel,URL,URLSearchParams,AbortController,Date:FixedDate,Event:TestEvent,CustomEvent:TestEvent,queueMicrotask,setTimeout:schedule,clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>schedule(fn,16),
     fetch:async(url,options)=>{fetches.push({url,options,data:Object.fromEntries(new URLSearchParams(options.body))});if(deferred)return new Promise(resolve=>{release=resolve;});if(response instanceof Error)throw response;return response;}});
+  if(delivery)context.window.WP_ENQUIRY_DELIVERY={send:delivery};
   vm.runInContext(widgetSource,context);
   vm.runInContext(`(()=>{${controller}})()`,context);
   const form=$('#enquiry-form');
@@ -316,5 +317,37 @@ test('calendar months always reserve six rows without making blank cells interac
     assert.ok(days.children.filter(cell=>cell.tagName==='SPAN').every(cell=>cell.getAttribute('aria-hidden')==='true'));
     assert.equal(days.querySelectorAll('button:not(:disabled)').filter(button=>button.tabIndex===0).length,1);
     f.$('[data-calendar-next]').click();
+  }
+});
+
+test('worker delivery receives complete contact data and keeps an accepted enquiry successful if receipt email is unavailable',async()=>{
+  const calls=[];
+  const f=fixture({provider:'worker',delivery:async(data,options)=>{assert.equal(options.container.hidden,false,'interactive security check is visible');assert.equal(options.container.closest('fieldset'),null,'security check remains usable while answers are disabled');calls.push({data:Object.fromEntries(data),options});return {accepted:true,requestId:'example-request',receipt:'unavailable'};}});
+  f.fillValid();await f.submit();await f.settle();
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].data.email,'guest@example.com');
+  assert.equal(calls[0].data.phone,'+44 7700900123');
+  assert.equal(calls[0].options.container.id,'enquiry-security');
+  assert.equal(f.fetches.length,0,'worker adapter is the single submission route');
+  assert.equal(f.redirects[0],'thank-you.html');
+  assert.equal(f.$('#enquiry-security').hidden,true,'verification container is hidden after success');
+});
+
+test('worker unknown receipt preserves answers and its actionable message without sending a second direct Formspree request',async()=>{
+  const f=fixture({provider:'worker',delivery:async()=>{const error=new Error('manual_check_required');error.userMessage='Please contact us to check this enquiry before sending again.';throw error;}});
+  f.fillValid();await f.submit();await f.settle();
+  assert.equal(f.redirects.length,0);
+  assert.equal(f.fetches.length,0);
+  assert.match(f.$('#form-result-text').textContent,/contact us to check/);
+  assert.equal(f.$('#enquiry-security').hidden,true,'verification container is hidden after failure');
+  assert.equal(f.$('#name').value,' Test Guest ');
+  assert.equal(f.$('#enquiry-fields').disabled,false);
+});
+
+test('worker integration fails closed if its adapter is missing or acceptance is not explicit',async()=>{
+  for(const delivery of [null,async()=>({ok:true})]){
+    const f=fixture({provider:'worker',delivery});f.fillValid();await f.submit();await f.settle();
+    assert.equal(f.redirects.length,0);assert.equal(f.fetches.length,0);assert.equal(f.receipts.length,0);
+    assert.equal(f.$('#enquiry-fields').disabled,false);
   }
 });

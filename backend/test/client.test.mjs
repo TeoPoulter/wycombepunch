@@ -103,3 +103,60 @@ test('late response from another mode never overwrites the selected mode', async
   assert.equal(state.value.textContent, '300');
   assert.match(state.status.textContent, /Motion-free mode/);
 });
+
+test('concurrent same-mode score replies retain the confirmed maximum in either response order', async () => {
+  for (const order of [[2, 1], [1, 2]]) {
+    const pending = [];
+    const state = setup(() => new Promise(resolve => pending.push(resolve)));
+    pending[0](Response.json(record(null)));
+    await settled();
+    for (const score of [999, 800]) state.document.dispatchEvent(new CustomEvent('wp:game-complete', {
+      detail: { version: '3', mode: 'precision', score }
+    }));
+    for (const index of order) {
+      pending[index](Response.json(record(index === 1 ? 999 : 800)));
+      await settled();
+    }
+    assert.equal(state.value.textContent, '999');
+    assert.equal(state.panel.dataset.state, 'ready');
+    assert.equal(state.timers.size, 1, 'only one midnight refresh should remain');
+  }
+});
+
+test('a fresh UK day starts empty and a late prior-day record cannot restore its high score', async () => {
+  const pending = [];
+  const state = setup(() => new Promise(resolve => pending.push(resolve)));
+  pending[0](Response.json(record(999)));
+  await settled();
+  state.document.dispatchEvent(new CustomEvent('wp:game-complete', {
+    detail: { version: '3', mode: 'precision', score: 800 }
+  }));
+  const resumed = new Event('pageshow'); resumed.persisted = true;
+  state.window.dispatchEvent(resumed);
+  pending[2](Response.json({ ...record(null), day: '2026-09-16' }));
+  await settled();
+  assert.equal(state.value.textContent, '—');
+  assert.match(state.status.textContent, /Be the first/);
+  pending[1](Response.json(record(999)));
+  await settled();
+  assert.equal(state.value.textContent, '—');
+  assert.match(state.status.textContent, /Be the first/);
+});
+
+test('mode changes keep independent confirmed maxima when returning to a prior mode', async () => {
+  const pending = [];
+  const state = setup(() => new Promise(resolve => pending.push(resolve)));
+  pending[0](Response.json(record(999)));
+  await settled();
+  state.window.WP.reducedMotion = true;
+  state.document.dispatchEvent(new Event('wp:motion'));
+  pending[1](Response.json(record(300, 'motion-free')));
+  await settled();
+  assert.equal(state.value.textContent, '300');
+  state.window.WP.reducedMotion = false;
+  state.document.dispatchEvent(new Event('wp:motion'));
+  pending[2](Response.json(record(800)));
+  await settled();
+  assert.equal(state.value.textContent, '999');
+  assert.match(state.status.textContent, /Precision mode/);
+});

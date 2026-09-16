@@ -1,9 +1,9 @@
 /* Portrait video, quiet controls, and a fullscreen view within the page. */
-.watch-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); align-items: center; gap: clamp(2rem, 6vw, 6rem); max-width: 1120px; }
+.watch-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(22rem, 352px)); align-items: center; gap: clamp(2rem, 6vw, 6rem); max-width: 1120px; }
 .watch-layout > * { min-width: 0; }
-.watch-copy { padding-block: 2rem; }
+.watch-copy { padding-block: 2rem; container-type: inline-size; }
 .watch-copy .eyebrow { margin-bottom: 1.4rem; }
-.watch-copy h2 { margin-bottom: 1.75rem; font-size: clamp(4.2rem, 8.6vw, 8.4rem); line-height: .94; }
+.watch-copy h2 { margin-bottom: 1.75rem; font-size: clamp(4.2rem, 8.6vw, 8.4rem); font-size: min(clamp(4.2rem, 8.6vw, 8.4rem), 28cqi); line-height: .94; overflow-wrap: anywhere; }
 .watch-copy p:not(.eyebrow) { max-width: 28rem; color: var(--muted, #b5b5bf); font-size: clamp(1rem, 1.4vw, 1.15rem); line-height: 1.7; }
 .watch-copy .watch-aside { margin-top: 1.7rem; padding-left: 1rem; border-left: 2px solid var(--red, #ff2349); color: var(--white, #f7f6f2); }
 .watch-copy [data-video-punchline] { opacity: 0; visibility: hidden; transform: translateY(14px); transition: opacity .55s ease, transform .7s cubic-bezier(.22,1,.36,1), visibility 0s .55s; }
@@ -31,8 +31,8 @@
 .punch-video.is-expanded video { max-height: calc(100dvh - 112px); }
 @media (max-width: 680px) {
   .watch-layout { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
-  .watch-copy { padding-block: 0; }
-  .watch-copy h2 { font-size: clamp(3.7rem, 16vw, 6rem); margin-bottom: 1.25rem; }
+  .watch-copy { padding-block: 0; container-type: inline-size; }
+  .watch-copy h2 { font-size: clamp(3.7rem, 16vw, 6rem); font-size: min(clamp(3.7rem, 16vw, 6rem), 28cqi); margin-bottom: 1.25rem; overflow-wrap: anywhere; }
   .watch-copy .watch-aside { margin-top: 1.1rem; }
   .punch-video, .punch-video-placeholder { inline-size: min(100%, 20rem); }
   .punch-video-overlay { padding: 58px 14px 14px; }
